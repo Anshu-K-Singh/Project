@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCIMITAR RESEARCH - Add Survey</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px; /* Narrow the container */
+            margin: auto;
+        }
+
+        .question-container {
+            margin-top: 30px;
+        }
+
+        .question-group {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .question-group:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-group .form-control {
+            margin-bottom: 10px;
+        }
+
+        .action-icons {
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 10px;
+            color: #555;
+        }
+
+        .action-icons:hover {
+            color: #007bff;
+        }
+
+        #surveyContent {
+            display: block;
+        }
+
+        #questionForm {
+            display: none;
+        }
+
+        .survey-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .survey-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .survey-header p {
+            font-size: 1.2rem;
+        }
+
+        .btn-primary,
+        .btn-success {
+            margin-top: 15px;
+        }
+
+        .form-label {
+            font-weight: bold;
+        }
+
+        .choices-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .choices-container .form-check {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .btn-small {
+            font-size: 0.875rem;
+            padding: 5px 10px;
+        }
+
+        .form-check-label {
+            margin-left: 5px;
+        }
+
+        .edit-option {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #007bff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Survey title and description -->
+        <div id="surveyContent">
+            <div class="survey-header">
+                <h2>Survey Title</h2>
+                <p>Survey Description goes here. Please answer the questions below.</p>
+            </div>
+            <form id="responseForm" method="POST" action="{% url 'addsurvey' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="surveyName" class="form-label">Survey Name</label>
+                    <input type="text" class="form-control" id="surveyName" name="survey_name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="surveyDescription" class="form-label">Survey Description</label>
+                    <textarea class="form-control" id="surveyDescription" name="survey_description" rows="4" required></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="showQuestionForm()">Add Questions</button>
+            </form>
+        </div>
+
+        <!-- Add Questions Section -->
+        <div id="questionForm" class="question-container">
+            <div class="survey-header">
+                <h2 id="surveyTitleDisplay">Survey Title</h2>
+                <p id="surveyDescriptionDisplay">Survey Description goes here.</p>
+            </div>
+            <div id="questionContainer"></div>
+
+            <button type="button" class="btn btn-primary btn-small mb-3" onclick="addQuestion()">Add Question</button>
+            <button type="button" class="btn btn-success btn-small mb-3" onclick="finishSurvey()">Finish Survey</button>
+        </div>
+    </div>
+
+    <script>
+        let questionCount = 0;
+    
+        function showQuestionForm() {
+            // Get the values for survey title and description
+            const surveyName = document.getElementById('surveyName').value;
+            const surveyDescription = document.getElementById('surveyDescription').value;
+    
+            // Update the display with the title and description
+            document.getElementById('surveyTitleDisplay').innerText = surveyName;
+            document.getElementById('surveyDescriptionDisplay').innerText = surveyDescription;
+    
+            // Hide the initial survey content and show the question form
+            document.getElementById('surveyContent').style.display = 'none';
+            document.getElementById('questionForm').style.display = 'block';
+        }
+    
+        function addQuestion() {
+            questionCount++;
+            const questionHtml = `
+                <div class="question-group" id="question${questionCount}">
+                    <div class="mb-3">
+                        <label for="questionText${questionCount}" class="form-label">Question ${questionCount}</label>
+                        <input type="text" class="form-control" id="questionText${questionCount}" name="questions[${questionCount}][question]" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="answerType${questionCount}" class="form-label">Answer Type</label>
+                        <select class="form-select" id="answerType${questionCount}" name="questions[${questionCount}][answer_type]" onchange="toggleOptions(${questionCount})" required>
+                            <option value="text">Text</option>
+                            <option value="multipleChoice">Multiple Choice</option>
+                            <option value="dropdown">Dropdown</option>
+                            <option value="boolean">Yes/No</option>
+                        </select>
+                    </div>
+                    <div id="options${questionCount}" class="d-none mb-3">
+                        <label for="choices${questionCount}" class="form-label">Choices (Comma Separated)</label>
+                        <input type="text" class="form-control" id="choices${questionCount}" name="questions[${questionCount}][choices]" placeholder="e.g. Option 1, Option 2" required>
+                    </div>
+                    <div id="multipleChoiceOptions${questionCount}" class="d-none choices-container">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="mcOption1${questionCount}" name="questions[${questionCount}][mcOptions][]" required>
+                            <label class="form-check-label" for="mcOption1${questionCount}" id="label_mcOption1${questionCount}">Option 1</label>
+                            <i class="fas fa-edit edit-option" onclick="editOption(${questionCount}, 1)"></i>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="mcOption2${questionCount}" name="questions[${questionCount}][mcOptions][]" required>
+                            <label class="form-check-label" for="mcOption2${questionCount}" id="label_mcOption2${questionCount}">Option 2</label>
+                            <i class="fas fa-edit edit-option" onclick="editOption(${questionCount}, 2)"></i>
+                        </div>
+                    </div>
+                    <div id="dropdownOptions${questionCount}" class="d-none mb-3">
+                        <label for="dropdownChoices${questionCount}" class="form-label">Dropdown Options</label>
+                        <input type="text" class="form-control" id="dropdownChoices${questionCount}" name="questions[${questionCount}][dropdownOptions]" placeholder="Comma separated" required>
+                    </div>
+                    <div id="booleanOptions${questionCount}" class="d-none mb-3">
+                        <label for="booleanChoice${questionCount}" class="form-label">Yes/No</label>
+                        <input type="checkbox" id="booleanChoice${questionCount}" name="questions[${questionCount}][boolean]" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="required${questionCount}" class="form-check-label">Required Question</label>
+                        <input type="checkbox" class="form-check-input" id="required${questionCount}" name="questions[${questionCount}][required]">
+                    </div>
+    
+                    <!-- Action Icons -->
+                    <span class="action-icons" onclick="editQuestion(${questionCount})" title="Edit Question"><i class="fas fa-edit"></i></span>
+                    <span class="action-icons" onclick="deleteQuestion(${questionCount})" title="Delete Question"><i class="fas fa-trash-alt"></i></span>
+                </div>
+            `;
+            document.getElementById('questionContainer').insertAdjacentHTML('beforeend', questionHtml);
+        }
+    
+        function editOption(questionId, optionId) {
+            const optionLabel = document.getElementById(`label_mcOption${optionId}${questionId}`);
+            const newLabel = prompt('Edit Option Text', optionLabel.innerText);
+            if (newLabel) {
+                optionLabel.innerText = newLabel;
+            }
+        }
+    
+        function toggleOptions(questionId) {
+            const answerType = document.getElementById(`answerType${questionId}`).value;
+    
+            // Hide all option containers
+            document.getElementById(`options${questionId}`).classList.add('d-none');
+            document.getElementById(`multipleChoiceOptions${questionId}`).classList.add('d-none');
+            document.getElementById(`dropdownOptions${questionId}`).classList.add('d-none');
+            document.getElementById(`booleanOptions${questionId}`).classList.add('d-none');
+    
+            if (answerType === 'multipleChoice') {
+                document.getElementById(`multipleChoiceOptions${questionId}`).classList.remove('d-none');
+            } else if (answerType === 'dropdown') {
+                document.getElementById(`dropdownOptions${questionId}`).classList.remove('d-none');
+            } else if (answerType === 'boolean') {
+                document.getElementById(`booleanOptions${questionId}`).classList.remove('d-none');
+            } else {
+                document.getElementById(`options${questionId}`).classList.remove('d-none');
+            }
+        }
+    
+        function deleteQuestion(questionId) {
+            const questionGroup = document.getElementById(`question${questionId}`);
+            if (questionGroup) {
+                questionGroup.remove();
+            }
+        }
+    
+        function finishSurvey() {
+            const surveyName = document.getElementById('surveyName').value;
+            const surveyDescription = document.getElementById('surveyDescription').value;
+    
+            const surveyData = {
+                name: surveyName,
+                description: surveyDescription,
+                questions: []
+            };
+    
+            // Collect all questions and their details
+            for (let i = 1; i <= questionCount; i++) {
+                const questionText = document.getElementById(`questionText${i}`).value;
+                const answerType = document.getElementById(`answerType${i}`).value;
+                const required = document.getElementById(`required${i}`).checked;
+    
+                let choices = [];
+    
+                if (answerType === 'multipleChoice') {
+                    // For multiple choice, collect each checkbox's value
+                    for (let j = 1; j <= 4; j++) {
+                        const optionValue = document.getElementById(`mcOption${j}${i}`);
+                        if (optionValue && optionValue.checked) {
+                            choices.push(optionValue.nextElementSibling.innerText); // Add the label text for selected options
+                        }
+                    }
+                } else {
+                    // For text, dropdown, etc., we just gather choices if there are any
+                    choices = document.getElementById(`choices${i}`) ? document.getElementById(`choices${i}`).value.split(',') : [];
+                }
+    
+                // Store the question details
+                surveyData.questions.push({
+                    question: questionText,
+                    answer_type: answerType,
+                    required: required,
+                    choices: choices
+                });
+            }
+    
+            // Check if there is at least one question in the survey
+            if (surveyData.questions.length === 0) {
+                alert('Please add at least one question to the survey.');
+                return;
+            }
+    
+            // Store the survey data in sessionStorage (or other means, like sending it to a server)
+            sessionStorage.setItem('surveyData', JSON.stringify(surveyData));
+    
+            // Redirect to the survey form view
+            window.location.href = "{% url 'responseform' %}";
+        }
+    </script>
+    

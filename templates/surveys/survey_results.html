@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Survey Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">{{ survey.title }} - Results</h1>
+        <p class="text-gray-600 mb-6">{{ survey.description }}</p>
+
+        <div class="space-y-6">
+            {% for question_id, result in results.items %}
+            <div class="border-b pb-4">
+                <h2 class="text-lg font-semibold mb-3">{{ result.text }}</h2>
+                
+                {% if result.type == 'text' %}
+                <div class="bg-gray-50 p-4 rounded">
+                    <h3 class="font-medium mb-2">Text Responses:</h3>
+                    {% for response in result.responses %}
+                        <p class="text-gray-700 mb-1">- {{ response }}</p>
+                    {% endfor %}
+                </div>
+
+                {% elif result.type == 'multiple_choice' or result.type == 'checkbox' %}
+                <div class="bg-gray-50 p-4 rounded">
+                    <h3 class="font-medium mb-2">Choice Distribution:</h3>
+                    {% for choice, data in result.choices.items %}
+                    <div class="flex items-center mb-2">
+                        <span class="mr-2 w-32">{{ choice }}:</span>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="{% if result.type == 'multiple_choice' %}bg-blue-600{% else %}bg-green-600{% endif %} h-2.5 rounded-full" 
+                                 style="width: {{ data.percentage|floatformat:2 }}%">
+                            </div>
+                        </div>
+                        <span class="ml-2 text-sm text-gray-600">
+                            {{ data.count }} ({{ data.percentage|floatformat:1 }}%)
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-image: url('{% static 'images/loginimage.jpg' %}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    display: flex;
+    justify-content: flex-start; /* Align content to the left */
+    align-items: center;
+    color: white;
+    overflow: hidden;
+}
+
+/* Main Container */
+.main-container {
+    display: flex;
+    justify-content: flex-start; /* Align content to the left */
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    padding-left: 5%; /* Create space on the left side */
+}
+
+/* Login Container Styling */
+.login-container {
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    padding: 40px 50px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%); /* Initially hidden off-screen */
+    animation: slideIn 1s forwards; /* Animation for sliding in */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Keyframes for Slide-in animation */
+@keyframes slideIn {
+    0% {
+        transform: translateX(-100%); /* Start from the left */
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0); /* Slide into view */
+        opacity: 1;
+    }
+}
+
+/* Heading Styling */
+h1 {
+    font-size: 36px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 20px;
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Label Styling */
+label {
+    font-size: 16px;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Input Styling */
+input {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+/* Input Focus Effect */
+input:focus {
+    border: 2px solid #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Button Styling */
+button {
+    padding: 12px;
+    background-color: yellow;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+/* Button Hover Effect */
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Register Link Styling */
+.btn-link {
+    text-align: center;
+    color: #3498db;
+    text-decoration: none;
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+/* Alert Styling */
+.alert {
+    background-color: #f39c12;
+    color: white;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Responsive Styling for smaller screens */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 30px;
+        width: 90%;
+        max-width: 350px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    input, button {
+        font-size: 14px;
+    }
+}

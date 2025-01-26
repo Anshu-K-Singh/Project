@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            margin: 2rem auto;
+            padding: 1.5rem;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .top-right-buttons {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .btn-group button {
+            width: 150px; /* Optional: You can adjust the width of the buttons */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Survey Details Card -->
+        <div class="card">
+            <!-- Top Right Buttons (Deactivate and Dashboard) inside the card -->
+            <div class="top-right-buttons">
+                <button id="deactivate-btn" class="btn btn-secondary">Deactivate</button>
+                <a href="{% url 'home' %}" class="btn btn-primary">Dashboard</a> <!-- Adjust the link to your home/dashboard URL -->
+            </div>
+            
+            <h3 class="card-title text-center">Survey Details</h3>
+            <div class="card-body">
+                <p><strong>Duration:</strong> 10</p>
+                <p><strong>Quota:</strong> 10</p>
+                <p><strong>Survey Status:</strong> <span id="survey-status">Active</span></p>
+                <p><strong>Survey Priority:</strong> High</p>
+                <p><strong>Survey Description:</strong> ----description----</p>
+
+                <p><strong>Survey URL:</strong> <a href="#" id="survey-url">url.com</a></p>
+                <p><strong>Social Survey URL:</strong> <a href="#" id="social-survey-url">socialmedia.url.com</a></p>
+                <p><strong>Survey Report URL:</strong> <a href="#" id="survey-report-url">report.url.com</a></p>
+
+                <h5>Survey Value</h5>
+                <p><strong>Complete Points:</strong> 100</p>
+                <p><strong>OverQuota Points:</strong> 0</p>
+                <p><strong>Terminate Points:</strong> 0</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('deactivate-btn').addEventListener('click', function () {
+            const statusElement = document.getElementById('survey-status');
+            if (statusElement.textContent === 'Active') {
+                statusElement.textContent = 'Inactive';
+                alert('The survey has been deactivated.');
+            } else {
+                alert('The survey is already inactive.');
+            }
+        });
+    </script>
+</body>
+</html>

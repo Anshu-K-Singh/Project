@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ survey.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">{{ survey.title }}</h1>
+        <p class="text-gray-600 mb-6">{{ survey.description }}</p>
+
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" id="surveyForm" class="space-y-6">
+            {% csrf_token %}
+            {% for question in survey.questions.all %}
+            <div class="border-b pb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ question.text }} 
+                </label>
+
+                {% if question.question_type == 'text' %}
+                <input type="text" name="question_{{ question.id }}" 
+                    {% if question.is_required %}required{% endif %}
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+
+                {% elif question.question_type == 'multiple_choice' %}
+                {% for choice in question.choices.all %}
+                <div class="flex items-center">
+                    <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" 
+                        {% if question.is_required %}required{% endif %}
+                        class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <label class="ml-2 block text-sm text-gray-900">{{ choice.text }}</label>
+                </div>
+                {% endfor %}
+
+                {% elif question.question_type == 'checkbox' %}
+                {% for choice in question.choices.all %}
+                <div class="flex items-center">
+                    <input type="checkbox" name="question_{{ question.id }}" value="{{ choice.id }}"
+                        class="h-4 w-4 border-gray-300 rounded text-indigo-600 focus:ring-indigo-500">
+                    <label class="ml-2 block text-sm text-gray-900">{{ choice.text }}</label>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" 
+                class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Submit Survey
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('surveyForm').addEventListener('submit', function(e) {
+            // Validate all questions are answered
+            const requiredQuestions = document.querySelectorAll('[required]');
+            for (let question of requiredQuestions) {
+                const questionType = question.getAttribute('name').split('_')[0];
+                const questionId = question.getAttribute('name').split('_')[1];
+
+                if (questionType === 'question') {
+                    const questionContainer = question.closest('.border-b');
+                    const questionText = questionContainer.querySelector('label').textContent.trim();
+
+                    if (question.type === 'text' && !question.value.trim()) {
+                        e.preventDefault();
+                        alert(`Please answer the question: ${questionText}`);
+                        question.focus();
+                        return;
+                    }
+
+                    if (question.type === 'radio') {
+                        const radioGroup = document.getElementsByName(question.name);
+                        const isChecked = Array.from(radioGroup).some(radio => radio.checked);
+                        
+                        if (!isChecked) {
+                            e.preventDefault();
+                            alert(`Please select an option for the question: ${questionText}`);
+                            radioGroup[0].focus();
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

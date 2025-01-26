@@ -1,0 +1,157 @@
+body {
+    background-image: url('{% static "images/dashboard.jpg" %}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+/* Ensure body has margin and padding reset */
+/* Transparent Navbar */
+.navbar-transparent {
+    background-color: transparent !important;
+    box-shadow: none;
+}
+
+/* Navbar Links Styling */
+.navbar-nav .nav-link {
+    color: white !important; /* Make navbar text black */
+    font-weight: 600;
+    font-size: 1.5rem; /* Increase font size */
+    padding-left: 30px;  /* Adjust padding to add space between links */
+    padding-right: 30px; /* Adjust padding to add space between links */
+}
+
+/* Navbar link hover effect */
+.navbar-nav .nav-link:hover {
+    color: yellow !important; /* Change link color to yellow on hover */
+}
+
+/* Login Button Styling */
+.navbar-nav .btn-warning {
+    background-color: yellow;
+    border-color: yellow;
+    color: black;
+    font-weight: bold;
+    margin-left: 50px; /* Further increased space between login and other items */
+    font-size: 1rem; /* Increase font size */
+    padding: 15px 30px; /* Increase padding for bigger button size */
+}
+
+
+.navbar-nav .btn-warning:hover {
+    background-color: #ffcc00;
+    border-color: #ffcc00;
+}
+
+/* Adjust the container for the main content */
+.container {
+    padding-top: 80px; /* Adjust padding to avoid overlap with the navbar */
+}
+
+/* Media query for smaller screens */
+@media (max-width: 767px) {
+    .navbar-nav .nav-link {
+        font-size: 1.1rem; /* Adjust text size on smaller screens */
+    }
+
+    .btn-warning {
+        font-size: 1rem; /* Adjust button size */
+        padding: 12px 20px;
+    }
+}
+
+
+
+
+
+/* dashboard.css */
+/* Content Box Styling */
+.content-box {
+    position: absolute;
+    right: 50px; /* Position the content box to the right */
+    top: 50%;
+    transform: translateY(-50%); /* Center it vertically */
+    text-align: right;
+    color: white;
+    opacity: 0; /* Start with text invisible */
+    animation: fadeInRight 2s ease-out forwards; /* Add the animation */
+}
+
+/* Keyframes for the fade-in and slide-in effect */
+@keyframes fadeInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(50px) translateY(-50%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) translateY(-50%);
+    }
+}
+
+/* Large Font Text */
+.text-container {
+    text-align: center; /* Center-align the text and button */
+}
+
+/* Large Font Text */
+.text-container h2 {
+    font-size: 3rem; /* Large font size for the text */
+    font-weight: inherit;
+    margin-bottom: 20px;
+    animation: fadeInText 2s ease-out forwards; /* Text fade-in animation */
+}
+
+/* Keyframes for text fading in */
+@keyframes fadeInText {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Know More Button */
+.btn-know-more {
+    padding: 10px 30px;
+    background-color: yellow;
+    color: black;
+    font-size: 1.2rem;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    display: inline-block; /* Ensure button is inline */
+    animation: bounceIn 10s ease infinite; /* Animation for the button */
+}
+
+/* Keyframes for the bounce effect on the button */
+@keyframes bounceIn {
+    0% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-5px);
+    }
+    50% {
+        transform: translateY(0);
+    }
+    70% {
+        transform: translateY(-3px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Hover effect for the Know More button */
+.btn-know-more:hover {
+    background-color: darkorange;
+}
+
+

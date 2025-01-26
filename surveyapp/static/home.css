@@ -1,0 +1,260 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    padding-top: 60px; /* To account for the fixed top navbar */
+    transition: margin-left 0.3s ease; /* Smooth transition when side menu opens/closes */
+}
+
+/* Top Nav Bar */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Top Nav Bar */
+.top-nav {
+    background-color: #1d2951;  /* Orange color for top navbar */
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;  /* Center items vertically */
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1050;  /* Bootstrap's navbar z-index is 1050 */
+    font-family: 'Roboto', sans-serif;  /* Apply the font */
+    animation: slideInFromTop 1s ease-out; /* Animation for text */
+}
+
+/* Animation to make text slide in from top */
+@keyframes slideInFromTop {
+    0% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Slider Placeholder */
+.top-nav .slider-placeholder {
+    font-size: 20px;  /* Slightly larger font size */
+    font-weight: 500;
+    opacity: 0;  /* Start hidden */
+    animation: fadeInText 1s ease-in-out forwards 0.5s; /* Animation for text fade-in */
+}
+
+/* Animation for text fade-in */
+@keyframes fadeInText {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Admin Info */
+.top-nav .admin-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Admin Info text */
+.top-nav .admin-info span {
+    font-size: 18px;
+    font-weight: 500;
+    opacity: 0;
+    animation: fadeInText 1s ease-in-out forwards 1s; /* Slight delay to animate text */
+}
+
+/* Admin Info Image */
+.top-nav .admin-info img {
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+/* Hover effect for text or links in the navbar */
+.top-nav .admin-info span:hover {
+    color: #FFD700;  /* Gold color on hover */
+    cursor: pointer;
+}
+
+/* Add hover effect to slider-placeholder if it's clickable */
+.top-nav .slider-placeholder:hover {
+    color: #FFD700;  /* Gold color on hover */
+    cursor: pointer;
+}
+
+
+
+
+
+
+/* Side Menu Drawer */
+.side-menu {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    top: 50px; /* Ensure the menu starts below the fixed navbar */
+    left: 0;
+    background-color: #003153; /* Dark background for side menu */
+    overflow-x: hidden;
+    transition: 0.5s ease;
+    padding-top: 20px;
+    z-index: 1040; /* Lower than the top navbar */
+    opacity: 0; /* Make menu initially invisible */
+}
+
+/* When the side menu is opened */
+.side-menu.open {
+    width: 250px;
+    opacity: 1; /* Fade in the menu when opened */
+}
+
+/* List and individual menu items */
+.side-menu .menu-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Styling individual menu items */
+.side-menu .menu-item {
+    padding: 10px 15px; /* Proper padding for a good clickable area */
+    font-size: 16px; /* Slightly smaller font size */
+    color: white; /* Text color */
+    display: flex; /* Flexbox for aligning icon and text */
+    align-items: center; /* Vertically center the content */
+    text-decoration: none; /* Removes underlines from links */
+    transition: background-color 0.3s, color 0.3s; /* Smooth hover transition */
+    margin-bottom: 2px; /* Reduced bottom margin to bring the items closer */
+}
+
+/* Hover effect for menu items */
+.side-menu .menu-item:hover {
+    background-color: #FFD700; /* Gold hover color */
+    color: black;
+}
+
+/* Close button inside the side menu */
+.side-menu .close-btn {
+    position: absolute;
+    top: 40px; /* Close button now adjusted properly within the side menu */
+    right: 20px;
+    font-size: 36px;
+    color: white;
+    border: none;
+    background: none;
+    cursor: pointer;
+    z-index: 1060; /* Ensure it's above menu items */
+}
+
+/* Menu Button (three-line icon) positioned on top left */
+.menu-btn {
+    font-size: 40px; /* Larger icon size for visibility */
+    color: white; /* Matching color with top navbar */
+    cursor: pointer;
+    position: fixed;
+    top: 35px; /* Positioned right below the navbar */
+    left: 0; /* Left corner of the screen */
+    z-index: 1055; /* Ensure menu button stays above other elements */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Menu button fades out when the menu is open */
+.menu-btn.fade-out {
+    opacity: 0;
+    transform: scale(0.8); /* Shrink slightly when fading */
+}
+
+/* Hover effect for the menu button */
+.menu-btn:hover {
+    color: #FFD700; /* Gold color on hover */
+}
+
+/* Main Content Styling */
+.main-content {
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
+    padding: 20px;
+    padding-top: 80px; /* Adjust padding to make space for the fixed navbar */
+}
+
+/* Content font size */
+.content {
+    font-size: 18px;
+}
+
+/* Side Menu (Bootstrap Adjustment) */
+.side-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100%;
+    background-color: #003153;
+    color: white;
+    padding-top: 80px; /* Adjust padding-top to account for the fixed navbar */
+    transition: 0.3s;
+}
+
+/* Menu list items */
+.side-menu .menu-item {
+    padding: 40px;
+    text-decoration: none;
+    color: white;
+    display: block;
+    transition: background-color 0.3s;
+}
+
+/* Hover effect for the main menu items */
+.side-menu .menu-item:hover {
+    background-color: #FFD700; /* Gold hover effect */
+}
+
+/* Submenu for nested items */
+.submenu {
+    display: none;
+    list-style-type: none;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+/* Styling for submenu links */
+.submenu li a {
+    padding: 8px 10px;
+    text-decoration: none;
+    color: white;
+    display: block;
+}
+
+/* Hover effect for submenu links */
+.submenu li a:hover {
+    background-color: #FFD700; /* Gold color for submenu hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .side-menu {
+        width: 100%; /* Full width for small screens */
+    }
+
+    .menu-btn {
+        font-size: 30px; /* Slightly smaller for mobile */
+        top: 20px; /* Adjusted for mobile */
+    }
+
+    .main-content {
+        padding-top: 100px; /* Adjust content padding for mobile view */
+    }
+}

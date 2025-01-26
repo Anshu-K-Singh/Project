@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Response form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Centering the content and making the width narrow */
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+        }
+
+        /* Survey form name at the top left */
+        .survey-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #007BFF;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        /* Survey title and description card */
+        .survey-details-card {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        /* Hover effect on survey details card */
+        .survey-details-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Title and description styling */
+        .survey-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .survey-description {
+            font-size: 1rem;
+            color: #555;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Styling for input elements */
+        .form-control,
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Styling for buttons */
+        .btn-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-container .btn {
+            margin-left: 10px;
+        }
+
+        /* Submit button styling */
+        .submit-btn {
+            width: 48%;
+        }
+
+        .btn-success {
+            background-color: #4CAF50;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #007BFF;
+            border: none;
+        }
+
+        /* Animation for the form elements */
+        .card-body input,
+        .card-body select {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .card-body input:nth-child(odd),
+        .card-body select:nth-child(odd) {
+            animation-delay: 0.2s;
+        }
+
+        .card-body input:nth-child(even),
+        .card-body select:nth-child(even) {
+            animation-delay: 0.4s;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Survey form name at the top-left corner -->
+    <div class="survey-name">Response Form</div>
+
+    <div class="container">
+
+        <!-- Survey Title and Description in its own Card -->
+        <div class="survey-details-card">
+            <h3 id="surveyTitle" class="survey-title"></h3>
+            <p id="surveyDescription" class="survey-description"></p>
+        </div>
+
+        <!-- Survey Form -->
+        <form id="responseForm">
+            <div id="questionList"></div>
+
+            <!-- Button container to hold both buttons -->
+            <div class="btn-container">
+                <a href="{% url 'surveydetails' %}" class="btn btn-primary">Back to Survey Details</a>
+                <button type="submit" class="btn btn-success submit-btn">Submit Survey</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Retrieve the survey data from sessionStorage
+        const surveyData = JSON.parse(sessionStorage.getItem('surveyData'));
+
+        if (surveyData) {
+            // Display the survey title and description
+            document.getElementById('surveyTitle').innerText = surveyData.name;
+            document.getElementById('surveyDescription').innerText = surveyData.description;
+
+            // Display the list of questions
+            const questionList = document.getElementById('questionList');
+            surveyData.questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.classList.add('card');
+
+                // Add the question text above the options
+                const questionTitle = document.createElement('div');
+                questionTitle.classList.add('card-header');
+                questionTitle.innerHTML = `Question ${index + 1}: ${question.question}`;
+                questionDiv.appendChild(questionTitle);
+
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+
+                // Based on answer type, show appropriate input element
+                if (question.answer_type === 'text') {
+                    cardBody.innerHTML += `<input type="text" class="form-control" name="question${index}" required>`;
+                } else if (question.answer_type === 'multipleChoice') {
+                    // For multiple choice, render each choice with a checkbox
+                    question.choices.forEach((choice, choiceIndex) => {
+                        const checkboxDiv = document.createElement('div');
+                        checkboxDiv.classList.add('form-check');
+
+                        const checkboxInput = document.createElement('input');
+                        checkboxInput.type = 'checkbox';
+                        checkboxInput.classList.add('form-check-input');
+                        checkboxInput.name = `question${index}[]`;  // Allow multiple selections
+                        checkboxInput.value = choice;
+                        checkboxInput.id = `choice${index}_${choiceIndex}`;
+                        checkboxDiv.appendChild(checkboxInput);
+
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.classList.add('form-check-label');
+                        checkboxLabel.setAttribute('for', `choice${index}_${choiceIndex}`);
+                        checkboxLabel.innerText = choice;
+                        checkboxDiv.appendChild(checkboxLabel);
+
+                        cardBody.appendChild(checkboxDiv);  // Append checkbox to the card body
+                    });
+                } else if (question.answer_type === 'dropdown') {
+                    let optionsHtml = '<select class="form-select" name="question' + index + '" required>';
+                    question.choices.forEach(choice => {
+                        optionsHtml += `<option value="${choice}">${choice}</option>`;
+                    });
+                    optionsHtml += '</select>';
+                    cardBody.innerHTML += optionsHtml;
+                } else if (question.answer_type === 'boolean') {
+                    cardBody.innerHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="question${index}" value="Yes" required> Yes
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="question${index}" value="No" required> No
+                        </div>
+                    `;
+                }
+
+                questionDiv.appendChild(cardBody);  // Append the card body with inputs to the question div
+                questionList.appendChild(questionDiv);
+            });
+        } else {
+            alert("No survey data available!");
+        }
+
+        // Handle form submission
+        document.getElementById('responseForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent default form submission
+
+            const formData = new FormData(event.target);
+            const responses = {};
+
+            // Collect responses
+            formData.forEach((value, key) => {
+                responses[key] = value;
+            });
+
+            console.log(responses);  // You can remove this later, just for debugging
+
+            // Example of how you might submit the data using Fetch API (you can adjust URL as needed)
+            fetch('/submit_survey/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    responses: responses
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,  // Add CSRF token if needed
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Survey submitted successfully!');
+                        window.location.href = "{% url 'surveydetails' %}";  // Redirect to survey details page
+                    } else {
+                        alert('Error submitting survey!');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+    </script>
+
+</body>
+
+</html>

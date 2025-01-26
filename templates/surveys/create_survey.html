@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Survey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6">Create a New Survey</h1>
+        
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form id="surveyForm" method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">{{ survey_form.title.label }}</label>
+                {{ survey_form.title }}
+                {% if survey_form.title.errors %}
+                <p class="text-red-500 text-sm mt-1">
+                    {% for error in survey_form.title.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">{{ survey_form.description.label }}</label>
+                {{ survey_form.description }}
+                {% if survey_form.description.errors %}
+                <p class="text-red-500 text-sm mt-1">
+                    {% for error in survey_form.description.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </p>
+                {% endif %}
+            </div>
+
+            <div id="questionsContainer">
+                <!-- Questions will be dynamically added here -->
+            </div>
+
+            <button type="button" onclick="addQuestion()" 
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Add Question
+            </button>
+
+            <button type="submit" 
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Create Survey
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let questionCounter = 0;
+
+        function addQuestion() {
+            questionCounter++;
+            const container = document.getElementById('questionsContainer');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'border p-4 rounded mt-4 bg-gray-50 relative';
+            questionDiv.innerHTML = `
+                <button type="button" onclick="this.closest('div').remove()" 
+                    class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                    ✕
+                </button>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                    <input type="text" name="question_text" required 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Question Type</label>
+                    <select name="question_type" onchange="toggleChoices(this)" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <option value="text">Text</option>
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="checkbox">Checkbox</option>
+                    </select>
+                </div>
+                <div id="choices_container_${questionCounter}" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700">Choices</label>
+                    <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
+                        <div class="flex items-center">
+                            <input type="text" 
+                                name="choices_${questionCounter}[]" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
+                                placeholder="Enter choice">
+                            <button type="button" onclick="removeChoice(this)" 
+                                class="text-red-500 hover:text-red-700">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addChoice(${questionCounter})" 
+                        class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-1 px-2 rounded text-sm">
+                        Add Choice
+                    </button>
+                </div>
+            `;
+            container.appendChild(questionDiv);
+        }
+
+        function toggleChoices(select) {
+            const choicesContainer = select.closest('div').nextElementSibling;
+            choicesContainer.style.display = ['multiple_choice', 'checkbox'].includes(select.value) ? 'block' : 'none';
+        }
+
+        function addChoice(questionId) {
+            const choicesList = document.getElementById(`choicesList_${questionId}`);
+            const newChoiceDiv = document.createElement('div');
+            newChoiceDiv.className = 'flex items-center';
+            newChoiceDiv.innerHTML = `
+                <input type="text" 
+                    name="choices_${questionId}[]" 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
+                    placeholder="Enter choice">
+                <button type="button" onclick="removeChoice(this)" 
+                    class="text-red-500 hover:text-red-700">
+                    ✕
+                </button>
+            `;
+            choicesList.appendChild(newChoiceDiv);
+        }
+
+        function removeChoice(button) {
+            const choiceDiv = button.closest('div');
+            const choicesList = choiceDiv.parentElement;
+            
+            // Prevent removing the last choice if it's the only one
+            if (choicesList.children.length > 1) {
+                choiceDiv.remove();
+            }
+        }
+
+        document.getElementById('surveyForm').addEventListener('submit', function(e) {
+            // Validate at least one question
+            const questions = document.querySelectorAll('input[name="question_text"]');
+            if (questions.length === 0) {
+                e.preventDefault();
+                alert('At least one question is required.');
+                return;
+            }
+
+            // Validate multiple choice and checkbox questions
+            questions.forEach(questionInput => {
+                const questionType = questionInput.closest('div').nextElementSibling.querySelector('select').value;
+                if (['multiple_choice', 'checkbox'].includes(questionType)) {
+                    const choicesContainer = questionInput.closest('.border').querySelector('div[id^="choices_container_"]');
+                    const choiceInputs = choicesContainer.querySelectorAll('input[name^="choices_"]');
+                    
+                    const validChoices = Array.from(choiceInputs)
+                        .map(input => input.value.trim())
+                        .filter(value => value !== '');
+                    
+                    if (validChoices.length < 2) {
+                        e.preventDefault();
+                        alert(`Question "${questionInput.value}" requires at least two choices.`);
+                        return;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

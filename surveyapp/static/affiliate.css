@@ -1,0 +1,84 @@
+/* Styling for the Submit and Cancel buttons */
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.submit-btn, .cancel-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 50px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Submit button styling */
+.submit-btn {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+    transform: scale(1.05);  /* Slightly increase size on hover */
+}
+
+/* Cancel button styling */
+.cancel-btn {
+    background-color: #f44336;
+    border: none;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #e53935;
+    transform: scale(1.05);  /* Slightly increase size on hover */
+}
+
+/* Styling for the overall form */
+.container {
+    max-width: 800px; /* Increased max width for larger forms */
+    margin: 0 auto;
+}
+
+h2 {
+    text-align: center;
+    font-size: 2rem;
+    color: #333;
+}
+
+form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Layout styling for 2-column split */
+.form-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columns for larger screens */
+    gap: 20px; /* Space between fields */
+}
+
+form p {
+    margin-bottom: 15px;
+}
+
+/* Responsive styling for smaller screens */
+@media (max-width: 768px) {
+    .form-fields {
+        grid-template-columns: 1fr; /* Stack fields in 1 column on smaller screens */
+    }
+
+    .form-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .submit-btn, .cancel-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
