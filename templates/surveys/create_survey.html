@@ -87,6 +87,7 @@
                         <option value="text">Text</option>
                         <option value="multiple_choice">Multiple Choice</option>
                         <option value="checkbox">Checkbox</option>
+                        <option value="radio">Radio</option>
                     </select>
                 </div>
                 <div id="choices_container_${questionCounter}" class="hidden">
@@ -114,7 +115,7 @@
 
         function toggleChoices(select) {
             const choicesContainer = select.closest('div').nextElementSibling;
-            choicesContainer.style.display = ['multiple_choice', 'checkbox'].includes(select.value) ? 'block' : 'none';
+            choicesContainer.style.display = ['multiple_choice', 'checkbox', 'radio'].includes(select.value) ? 'block' : 'none';
         }
 
         function addChoice(questionId) {
@@ -156,7 +157,7 @@
             // Validate multiple choice and checkbox questions
             questions.forEach(questionInput => {
                 const questionType = questionInput.closest('div').nextElementSibling.querySelector('select').value;
-                if (['multiple_choice', 'checkbox'].includes(questionType)) {
+                if (['multiple_choice', 'checkbox', 'radio'].includes(questionType)) {
                     const choicesContainer = questionInput.closest('.border').querySelector('div[id^="choices_container_"]');
                     const choiceInputs = choicesContainer.querySelectorAll('input[name^="choices_"]');
                     

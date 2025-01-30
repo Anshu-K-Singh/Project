@@ -30,6 +30,7 @@ class Question(models.Model):
         ('text', 'Text'),
         ('multiple_choice', 'Multiple Choice'),
         ('checkbox', 'Checkbox'),
+        ('radio', 'Radio'),
     ]
     
     survey = models.ForeignKey(Survey, related_name='questions', on_delete=models.CASCADE)

@@ -22,7 +22,7 @@
             <p class="font-medium">{{ question.text }}</p>
             <p class="text-sm text-gray-600">Type: {{ question.get_question_type_display }}</p>
             
-            {% if question.question_type == 'multiple_choice' or question.question_type == 'checkbox' %}
+            {% if question.question_type == 'multiple_choice' or question.question_type == 'checkbox' or question.question_type == 'radio' %}
             <div class="mt-2">
                 <strong>Choices:</strong>
                 <ul class="list-disc list-inside">

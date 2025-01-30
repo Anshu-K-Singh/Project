@@ -58,8 +58,8 @@ class CreateSurveyView(LoginRequiredMixin, View):
                         survey=survey
                     )
                     
-                    # Handle choices for multiple choice and checkbox
-                    if q_type in ['multiple_choice', 'checkbox']:
+                    # Handle choices for multiple choice, checkbox, and radio
+                    if q_type in ['multiple_choice', 'checkbox', 'radio']:
                         # Construct the choices key dynamically
                         choices_key = f'choices_{index + 1}[]'
                         
@@ -69,7 +69,7 @@ class CreateSurveyView(LoginRequiredMixin, View):
                         
                         # Validate choices
                         if len(choice_texts) < 2:
-                            raise ValidationError(f"Multiple Choice and Checkbox questions require at least two choices. Please add choices for the question: '{text}'.")
+                            raise ValidationError(f"Multiple Choice, Checkbox, and Radio questions require at least two choices. Please add choices for the question: '{text}'.")
                         
                         # Create choices
                         for choice_text in choice_texts:
@@ -120,8 +120,8 @@ class TakeSurveyView(View):
                         question=question,
                         text_answer=text_answer
                     )
-            elif question.question_type in ['multiple_choice', 'checkbox']:
-                # Handle multiple choice and checkbox answers
+            elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                # Handle multiple choice, checkbox, and radio answers
                 choice_ids = request.POST.getlist(f'question_{question.id}')
                 for choice_id in choice_ids:
                     choice = Choice.objects.get(id=choice_id)
@@ -160,14 +160,16 @@ class SurveyResultsView(LoginRequiredMixin, View):
                         pass
                 question_results['responses'] = text_responses
             
-            elif question.question_type in ['multiple_choice', 'checkbox']:
+            elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
                 # Collect choice distribution
                 choice_counts = {}
+                total_responses = responses.filter(answers__question=question).count()
+                
                 for choice in question.choices.all():
                     choice_count = responses.filter(answers__question=question, answers__choice_answer=choice).count()
                     choice_counts[choice.text] = {
                         'count': choice_count,
-                        'percentage': (choice_count / responses.count() * 100) if responses.count() > 0 else 0
+                        'percentage': (choice_count / total_responses * 100) if total_responses > 0 else 0
                     }
                 question_results['choices'] = choice_counts
             

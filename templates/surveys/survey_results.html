@@ -23,14 +23,14 @@
                     {% endfor %}
                 </div>
 
-                {% elif result.type == 'multiple_choice' or result.type == 'checkbox' %}
+                {% elif result.type == 'multiple_choice' or result.type == 'checkbox' or result.type == 'radio' %}
                 <div class="bg-gray-50 p-4 rounded">
                     <h3 class="font-medium mb-2">Choice Distribution:</h3>
                     {% for choice, data in result.choices.items %}
                     <div class="flex items-center mb-2">
                         <span class="mr-2 w-32">{{ choice }}:</span>
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div class="{% if result.type == 'multiple_choice' %}bg-blue-600{% else %}bg-green-600{% endif %} h-2.5 rounded-full" 
+                            <div class="{% if result.type == 'multiple_choice' or result.type == 'radio' %}bg-blue-600{% else %}bg-green-600{% endif %} h-2.5 rounded-full" 
                                  style="width: {{ data.percentage|floatformat:2 }}%">
                             </div>
                         </div>

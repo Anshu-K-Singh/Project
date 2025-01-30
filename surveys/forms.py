@@ -21,6 +21,7 @@ class QuestionForm(forms.ModelForm):
         ('text', 'Text'),
         ('multiple_choice', 'Multiple Choice'),
         ('checkbox', 'Checkbox'),
+        ('radio', 'Radio'),
     ]
 
     text = forms.CharField(
@@ -58,15 +59,15 @@ class QuestionForm(forms.ModelForm):
         question_type = self.cleaned_data.get('question_type')
         choices = self.cleaned_data.get('choices', '').strip()
 
-        if question_type in ['multiple_choice', 'checkbox']:
+        if question_type in ['multiple_choice', 'checkbox', 'radio']:
             if not choices:
-                raise ValidationError("Choices are required for Multiple Choice and Checkbox questions.")
+                raise ValidationError("Choices are required for Multiple Choice, Checkbox, and Radio questions.")
             
             # Split choices and remove empty lines
             choice_list = [choice.strip() for choice in choices.split('\n') if choice.strip()]
             
             if len(choice_list) < 2:
-                raise ValidationError("At least two choices are required for Multiple Choice and Checkbox questions.")
+                raise ValidationError("At least two choices are required for Multiple Choice, Checkbox, and Radio questions.")
             
             if len(choice_list) > 10:
                 raise ValidationError("Maximum 10 choices are allowed.")
