@@ -1,124 +1,237 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <title>Login</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="{% static 'login.css' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Survey Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* Add custom styles for the modal pop-up */
-        .login-required-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: white;
-            border: 1px solid #ccc;
-            z-index: 9999;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        .animated-background {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            height: 100vh;
         }
 
-        .login-required-popup h3 {
-            margin-bottom: 20px;
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
-        .login-required-popup .close-btn {
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .form-input {
+            border: 2px solid #cbd5e0 !important;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #4299e1 !important;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5) !important;
+        }
+
+        .floating-shapes div {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 24px;
-            cursor: pointer;
-            animation: shake 0.5s;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: float 8s linear infinite;
+            bottom: -100px;
         }
 
-        /* Shake animation for the X button */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
+        .floating-shapes div:nth-child(1) {
+            left: 25%;
+            animation-delay: 0s;
+        }
+
+        .floating-shapes div:nth-child(2) {
+            left: 50%;
+            animation-delay: 3s;
+        }
+
+        .floating-shapes div:nth-child(3) {
+            left: 75%;
+            animation-delay: 5s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+            }
         }
     </style>
 </head>
+<body class="animated-background min-h-screen flex items-center justify-center relative overflow-hidden">
+    <!-- Floating Shapes -->
+    <div class="floating-shapes">
+        <div class="rounded-lg"></div>
+        <div class="rounded-full"></div>
+        <div class="rounded-lg"></div>
+    </div>
 
-<body style="background-image: url('{% static 'images/register.jpg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 100vh; display: flex; justify-content: center; align-items: center; color: white;">
-    <div class="main-container">
-        <div class="login-container">
-            <h1 class="text-center text-white mb-4" style="font-size: 36px; text-shadow: 2px 2px 5px rgba(0,0,0,0.7);">LOGIN</h1>
-
-            {% if messages %}
-            <div class="alert alert-info" id="logoutMessage">
-                {% for message in messages %}
-                <p>{{ message }}</p>
-                {% endfor %}
+    <div class="max-w-md w-full mx-4">
+        <div class="main-content">
+            {% block content %}
+            <!-- Logo and Title -->
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-white text-shadow">Welcome Back</h2>
+                <p class="text-white text-shadow mt-2">Please sign in to your account</p>
             </div>
-            {% endif %}
 
-            {% if redirect_to %}
-            <div class="alert alert-warning">
-                <p><strong>Login Required:</strong> You must log in to access that page. Please log in below.</p>
+            <!-- Login Card -->
+            <div class="glass-effect rounded-lg p-8">
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="POST" class="space-y-6" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Username Field -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" name="username" id="username" required
+                                class="form-input block w-full pl-10 pr-3 py-2 rounded-md focus:outline-none"
+                                placeholder="Enter your username">
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input type="password" name="password" id="password" required
+                                class="form-input block w-full pl-10 pr-3 py-2 rounded-md focus:outline-none"
+                                placeholder="Enter your password">
+                        </div>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" name="remember_me" id="remember_me"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="remember_me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                        </div>
+                        <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">Forgot password?</a>
+                    </div>
+
+                    <!-- Login Button -->
+                    <div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105 transition-transform duration-200">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Sign in
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Divider -->
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Login Button -->
+                <div class="mt-6">
+                    <a href="#"
+                        class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transform hover:scale-105 transition-transform duration-200">
+                        <i class="fab fa-google text-red-500 mr-2"></i>
+                        Continue with Google
+                    </a>
+                </div>
             </div>
-            {% endif %}
 
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Username" required>
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-                <button type="submit">Login</button>
-            </form>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="{% url 'register' %}" class="btn btn-link">Don't have an account? Register here</a>
-            </div>
+            <!-- Register Link -->
+            <p class="mt-8 text-center text-sm text-white">
+                Don't have an account?
+                <a href="{% url 'register' %}" class="font-medium text-blue-300 hover:text-blue-200">Sign up now</a>
+            </p>
+            {% endblock %}
         </div>
     </div>
 
     <script>
-        // Function to show the login required pop-up
-        function showLoginRequiredPopup() {
-            const popup = document.createElement('div');
-            popup.classList.add('login-required-popup');
-            popup.innerHTML = `
-                <h3>Login Required</h3>
-                <span class="close-btn">✖</span>
-                <p>You need to log in to access this page.</p>
-            `;
-            document.body.appendChild(popup);
-
-            // Add event listener to the close button
-            const closeButton = popup.querySelector('.close-btn');
-            closeButton.addEventListener('click', function() {
-                document.body.removeChild(popup); // Close the popup
-            });
-        }
-
-        // Detect if the user is logged out and display the popup on back button press
-        window.onpopstate = function(event) {
-            if (!sessionStorage.getItem('user_authenticated')) {
-                showLoginRequiredPopup();
-                // Prevent back navigation by pushing the current state to history
-                history.pushState(null, null, window.location.href); // Stay on the same page
+        // Prevent browser back button after logout
+        (function() {
+            // Clear any existing history
+            window.history.forward();
+            
+            function noBack() {
+                window.history.forward();
             }
-        };
 
-        // Set session storage on page load if user is logged out
-        // This simulates a user logged out state and prevents using the back button
-        if (window.location.pathname === '/accounts/login/') {
-            sessionStorage.setItem('user_authenticated', 'false');
-        } else {
-            sessionStorage.setItem('user_authenticated', 'true');
-        }
+            // Add multiple event listeners to catch all navigation attempts
+            window.onload = function() {
+                noBack();
+                // Clear any existing history state
+                if (window.history && window.history.pushState) {
+                    window.history.pushState('', '', window.location.href);
+                    window.history.pushState('', '', window.location.href);
+                    window.history.pushState('', '', window.location.href);
+                }
+            };
+
+            window.onpageshow = function(event) {
+                if (event.persisted) {
+                    // Page was loaded from cache (back/forward button)
+                    noBack();
+                    window.location.reload();
+                }
+            };
+
+            window.onunload = function() {
+                void(0);
+            };
+
+            // Prevent back button
+            window.onpopstate = function() {
+                window.history.forward();
+            };
+
+            // Additional security: check if we're on login page after logout
+            if (document.referrer && document.referrer.indexOf('home') !== -1) {
+                window.location.replace("{% url 'login' %}");
+            }
+        })();
     </script>
 </body>
-
 </html>
