@@ -73,31 +73,3 @@ class Surveymonitor(models.Model):
 
     def __str__(self):
         return f"{self.code} - {self.name or 'Unnamed Survey'}"
-
-
-
-
-
-#MODELS FOR ADD SURVEY
-class Survey(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-class Question(models.Model):
-    survey = models.ForeignKey(Survey, related_name="questions", on_delete=models.CASCADE)
-    text = models.CharField(max_length=200)
-    answer_type = models.CharField(max_length=50, choices=[('text', 'Text'), ('multipleChoice', 'Multiple Choice'), ('dropdown', 'Dropdown'), ('boolean', 'Yes/No')])
-    choices = models.TextField(null=True, blank=True)
-    required = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.text
-    
-class Response(models.Model):
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    response_text = models.TextField()

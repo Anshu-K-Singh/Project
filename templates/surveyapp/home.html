@@ -1,357 +1,330 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCIMITAR RESEARCH</title>
-    <!-- Link to the custom static CSS file -->
-    <link rel="stylesheet" href="{% static 'home.css' %}">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Survey Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        /* Ensure body takes full height and has a black background */
-        body, html {
-            height: 100%;
-            margin: 0;
-            background-color: black;
-            color: white;
+        .animated-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
         }
 
-        /* Container to center the content and allow flex wrapping */
-        .content-area {
-            display: grid;  
-            grid-template-columns: repeat(2, 1fr); /* 2 columns per row */
-            gap: 20px; /* Space between boxes */
-            padding: 20px;
-            justify-items: center;
-            align-items: start;
-            height: 100%;
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* Styling for each box containing a table */
-        .box {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 100%; /* Ensure the box takes full width within its grid cell */
-            background-color: #fff;
-            min-width: 280px; /* Prevent box from becoming too small */
-            box-sizing: border-box; /* Include padding in width/height calculation */
-        }
-
-        /* Styling for table inside each box */
-        .box-table {
-            width: 100%;
-            margin: 0;
-            color: black;
-        }
-
-        .box-table th,
-        .box-table td {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .box-table th {
-            background-color: #f8f9fa;
-        }
-
-        .box-table td {
-            background-color: #f1f1f1;
-        }
-
-        .table-heading {
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: black;
-        }
-
-        /* Make boxes responsive */
-        @media (max-width: 768px) {
-            .content-area {
-                grid-template-columns: 1fr; /* Stack boxes in 1 column on smaller screens */
-            }
-        }
-
-        /* Style for submenu under Survey Manager */
         .submenu {
-            display: none;
-            list-style-type: none;
-            padding-left: 20px;
-            margin-top: 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .submenu.active {
+            max-height: 500px;
         }
 
-        .submenu li a {
-            padding: 8px;
-            text-decoration: none;
-            color: white;
-            display: block;
+        .sidebar {
+            width: 68px;
+            transition: width 0.3s ease;
         }
 
-        .submenu li a:hover {
-            background-color: #F0B36A;
-        }
-
-        /* Side Menu Drawer */
-        .side-menu {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #003153;  /* Dark background for side menu */
-            overflow-x: hidden;
-            transition: 0.5s ease;
-            padding-top: 20px;
-            z-index: 1050;  /* Bootstrap's z-index */
-            opacity: 0;  /* Make menu initially invisible */
-        }
-
-        .side-menu.open {
+        .sidebar:hover {
             width: 250px;
-            opacity: 1;  /* Fade in the menu when opened */
         }
 
-        .side-menu .menu-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .side-menu .menu-item {
-            padding: 10px 20px;   
-            text-decoration: none;
-            color: white;
-            display: block;
-            transition: background-color 0.3s;
-        }
-
-        .side-menu .menu-item:hover {
-            background-color: orangered;
-        }
-
-        /* Menu Button */
-        .menu-btn {
-            font-size: 40px;  /* Larger icon size for visibility */
-            color: white;   /* Matching color with top navbar */
-            cursor: pointer;
-            position: fixed;
-            top: 35px;         /* Positioned right below the navbar */
-            left: 0;
-            z-index: 1060;    /* Ensure menu button stays above other elements */
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .menu-btn.fade-out {
-            opacity: 0;  /* Fade out when the menu is open */
-            transform: scale(0.8);  /* Shrink the icon slightly when it fades */
-        }
-
-        .menu-btn:hover {
-            color: #FFD700;  /* Gold color on hover */
-        }
-
-        /* Top Nav Bar */
-        .top-nav {
-            background-color: #1d2951;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1055; /* Make sure it's on top */
-            font-family: 'Roboto', sans-serif;
-            transition: all 0.3s ease-in-out;
-        }
-
-        .top-nav .slider-placeholder {
-            font-size: 20px;
-            font-weight: 500;
+        .nav-text {
             opacity: 0;
-            animation: fadeInText 1s ease-in-out forwards 0.5s;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
         }
 
-        /* Animation for text fade-in */
-        @keyframes fadeInText {
-            0% {
-                opacity: 0;
-            }
+        .sidebar:hover .nav-text {
+            opacity: 1;
+        }
 
-            100% {
-                opacity: 1;
-            }
+        .submenu a span {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .submenu a span {
+            opacity: 1;
+        }
+
+        .menu-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover .menu-icon {
+            transform: scale(1.2);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        .fade-out {
+            animation: fadeOut 2s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px); }
         }
     </style>
 </head>
 
-<body style="background-image: url('{% static 'images/adminpanel.jpg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 100vh; display: flex; justify-content: center; align-items: center; color: white;">
-
-    <!-- Side Menu Drawer -->
-    <div id="sideMenu" class="side-menu">
-        <button class="close-btn" onclick="closeMenu()">×</button>
-        <ul class="menu-list">
-            <li><a href="#" id="dashboardLink" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="#" class="menu-item" onclick="toggleSurveyManager()"><i class="fas fa-cogs"></i> Survey Manager</a>
-                <ul id="surveyManagerSubmenu" class="submenu">
-                    <li><a href="{% url 'surveymonitor' %}">Monitor Survey</a></li>
-                    <li><a href="#">Survey Priority</a></li>
-                    <li><a href="#">Launch Survey</a></li>
-                    <li><a href="#">Send Survey Mailer</a></li>
-                    <li><a href="#">Check Survey Feasibility</a></li>
-                </ul>
-            </li>
-            <li><a href="#" class="menu-item"><i class="fas fa-microphone"></i> Survey Host</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-users"></i> User Management</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-hand-holding-usd"></i> Redemption Request</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-comment"></i> Support</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-user-check"></i> Profiling</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-cogs"></i> Setup</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-chart-line"></i> Report</a></li>
-            <li><a href="{% url 'affiliate' %}" class="menu-item"><i class="fas fa-link"></i> Affiliate</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-poll"></i> Poll</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-newspaper"></i> News</a></li>
-            <li><a href="#" class="menu-item"><i class="fas fa-gift"></i> Gift Voucher</a></li>
-            <li><a href="{% url 'logout' %}" id="logout-btn" class="menu-item"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-        </ul>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <div class="top-nav">
-            <div class="slider-placeholder">Scimitar Research</div>
-            <div class="admin-info">
-                <span>Admin</span>
+<body class="bg-gray-100">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-gradient-to-b from-gray-800 to-gray-900 text-white min-h-screen flex flex-col shadow-xl transition-all duration-300 ease-in-out overflow-hidden">
+            <!-- Logo section -->
+            <div class="p-4 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+                <i class="fa fa-user-circle-o fa-lg menu-icon w-6"></i>
+                <span class="nav-text ml-2 text-lg font-semibold">{{ request.user.username|title }}</span>
             </div>
-        </div>
 
-        <!-- Content where the tables will be dynamically generated -->
-        <div class="content-area" id="contentArea">
-            <!-- Tables will be created here by JavaScript -->
-        </div>
+            <!-- Navigation Menu -->
+            <nav class="flex-grow overflow-y-auto">
+                <ul class="py-4">
+                    <!-- Dashboard -->
+                    <li class="mb-1">
+                        <a href="{% url 'dashboard' %}" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-envelope-o fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <!-- Survey Manager with submenu -->
+                    <li class="mb-1">
+                        <a href="#" id="survey-manager" 
+                           class="menu-item flex items-center justify-between px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <div class="flex items-center">
+                                <i class="fa fa-clock-o fa-lg menu-icon w-6"></i>
+                                <span class="nav-text ml-3">Survey Manager</span>
+                            </div>
+                            <i class="fa fa-chevron-down text-sm transition-transform duration-200 nav-text"></i>
+                        </a>
+                        <ul id="survey-manager-submenu" class="submenu bg-gray-900 rounded-lg mx-4 my-1">
+                            <li><a href="{% url 'surveymonitor' %}" class="flex items-center px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200">
+                                <i class="fa fa-circle-o fa-sm w-4"></i>
+                                <span class="ml-2">Monitor Survey</span>
+                            </a></li>
+                            <li><a href="#" class="flex items-center px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200">
+                                <i class="fa fa-circle-o fa-sm w-4"></i>
+                                <span class="ml-2">Survey Priority</span>
+                            </a></li>
+                            <li><a href="#" class="flex items-center px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200">
+                                <i class="fa fa-circle-o fa-sm w-4"></i>
+                                <span class="ml-2">Launch Survey</span>
+                            </a></li>
+                            <li><a href="#" class="flex items-center px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200">
+                                <i class="fa fa-circle-o fa-sm w-4"></i>
+                                <span class="ml-2">Survey Mailer</span>
+                            </a></li>
+                            <li><a href="#" class="flex items-center px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200">
+                                <i class="fa fa-circle-o fa-sm w-4"></i>
+                                <span class="ml-2">Survey Feasibility</span>
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Survey Host -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-desktop fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Survey Host</span>
+                        </a>
+                    </li>
+
+                    <!-- User Management -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-plane fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">User Management</span>
+                        </a>
+                    </li>
+
+                    <!-- Redemption -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-shopping-cart w-6 menu-icon"></i>
+                            <span class="nav-text ml-3">Redemption Request</span>
+                        </a>
+                    </li>
+
+                    <!-- Support -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-microphone fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Support</span>
+                        </a>
+                    </li>
+
+                    <!-- Profiling -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-flask fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Profiling</span>
+                        </a>
+                    </li>
+
+                    <!-- Setup -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-picture-o fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Setup</span>
+                        </a>
+                    </li>
+
+                    <!-- Report -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-align-left fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Report</span>
+                        </a>
+                    </li>
+
+                    <!-- Affiliate -->
+                    <li class="mb-1">
+                        <a href="{% url 'affiliate' %}" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-gamepad fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Affiliate</span>
+                        </a>
+                    </li>
+
+                    <!-- Poll -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-glass fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Poll</span>
+                        </a>
+                    </li>
+
+                    <!-- News -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-rocket fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">News</span>
+                        </a>
+                    </li>
+
+                    <!-- Gift Voucher -->
+                    <li class="mb-1">
+                        <a href="#" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-question-circle fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Gift Voucher</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Logout section -->
+            <div class="border-t border-gray-700 p-4 bg-gray-800 bg-opacity-50">
+                <a href="{% url 'logout' %}" class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all duration-200">
+                    <i class="fa fa-sign-out fa-lg menu-icon w-6"></i>
+                    <span class="nav-text ml-3">Logout</span>
+                </a>
+            </div>
+
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-hidden animated-bg">
+            <div class="main-content overflow-y-auto">
+                <!-- Header -->
+                <h1 class="fade-out text-4xl font-bold text-white text-center mt-4">Scimitar Research</h1>
+                <div class="container mx-auto px-6 py-8 h-full">
+                    <div class="main-content">
+                        {% block content %}
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Menu Button -->
-    <span class="menu-btn" onclick="openMenu()">&#9776;</span>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- JavaScript for handling the side menu -->
     <script>
-        function openMenu() {
-            document.getElementById("sideMenu").classList.add("open");
-            document.querySelector(".menu-btn").classList.add("fade-out");
-            document.body.style.marginLeft = "250px";
-        }
+        const sidebar = document.querySelector('.sidebar');
+        const submenu = document.getElementById('survey-manager-submenu');
+        let isHovered = false;
+        let submenuOpen = false;
 
-        function closeMenu() {
-            document.getElementById("sideMenu").classList.remove("open");
-            document.querySelector(".menu-btn").classList.remove("fade-out");
-            document.body.style.marginLeft = "0";
-        }
-
-        // JavaScript to toggle the Survey Manager submenu
-        function toggleSurveyManager() {
-            var submenu = document.getElementById("surveyManagerSubmenu");
-            submenu.style.display = submenu.style.display === "block" ? "none" : "block";
-        }
-    </script>
-
-    <!-- JavaScript for creating dynamic tables -->
-    <script>
-        function createTabularBoxes() {
-            const contentArea = document.getElementById('contentArea');
-            contentArea.innerHTML = '';  // Clear existing content
-
-            // Define table names here
-            const tableNames = ['Sign up Trend', 'User Demographic', 'User Insights', 'User Sources']; 
-
-            for (let i = 0; i < 4; i++) {
-                const box = document.createElement('div');
-                box.className = 'box';
-
-                // Create table heading for each table
-                const heading = document.createElement('div');
-                heading.className = 'table-heading';
-                const headingText = document.createElement('span');
-                headingText.textContent = tableNames[i];
-                heading.appendChild(headingText);
-                box.appendChild(heading);
-
-                // Create table for the box
-                const table = document.createElement('table');
-                table.className = 'table table-bordered box-table';
-
-                // Add table header with columns
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                
-                if (i < 2) {
-                    const header1 = document.createElement('th');
-                    header1.textContent = 'Column 1';
-                    const header2 = document.createElement('th');
-                    header2.textContent = 'Column 2';
-                    const header3 = document.createElement('th');
-                    header3.textContent = 'Column 3';
-                    headerRow.appendChild(header1);
-                    headerRow.appendChild(header2);
-                    headerRow.appendChild(header3);
-                } else {
-                    const header1 = document.createElement('th');
-                    header1.textContent = 'Column 1';
-                    const header2 = document.createElement('th');
-                    header2.textContent = 'Column 2';
-                    headerRow.appendChild(header1);
-                    headerRow.appendChild(header2);
-                }
-                
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-
-                // Add table body with non-editable rows
-                const tbody = document.createElement('tbody');
-                for (let j = 0; j < 3; j++) {
-                    const row = document.createElement('tr');
-                    const cell1 = document.createElement('td');
-                    cell1.textContent = `Data ${j + 1} (Box ${i + 1}, Column 1)`; 
-                    row.appendChild(cell1);
-
-                    const cell2 = document.createElement('td');
-                    cell2.textContent = `Data ${j + 1} (Box ${i + 1}, Column 2)`;
-                    row.appendChild(cell2);
-
-                    if (i < 2) {
-                        const cell3 = document.createElement('td');
-                        cell3.textContent = `Data ${j + 1} (Box ${i + 1}, Column 3)`;
-                        row.appendChild(cell3);
-                    }
-
-                    tbody.appendChild(row);
-                }
-                table.appendChild(tbody);
-
-                box.appendChild(table);
-                contentArea.appendChild(box);
+        function showContent(section) {
+            // Hide all content sections
+            document.querySelectorAll('.content-section').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            
+            // Show the selected section
+            const contentSection = document.getElementById(section + '-content');
+            if (contentSection) {
+                contentSection.classList.add('active');
             }
+
+            // Update active state in menu
+            document.querySelectorAll('.menu-item').forEach(function(el) {
+                el.classList.remove('bg-gray-700', 'text-white');
+            });
+            event.currentTarget.classList.add('bg-gray-700', 'text-white');
+
+            return false;
         }
 
-        // Attach the event listener to the dashboard link
-        document.getElementById('dashboardLink').onclick = function(event) {
-            event.preventDefault();  // Prevent default link behavior
-            createTabularBoxes();  // Call the function to create tables
-        };
+        // Toggle submenu
+        document.getElementById('survey-manager').addEventListener('click', function() {
+            const icon = this.querySelector('.fa-chevron-down');
+            submenuOpen = !submenuOpen;
+            submenu.classList.toggle('active');
+            icon.style.transform = submenuOpen ? 'rotate(180deg)' : 'rotate(0)';
+        });
+
+        // Handle sidebar hover
+        sidebar.addEventListener('mouseenter', function() {
+            isHovered = true;
+        });
+
+        sidebar.addEventListener('mouseleave', function() {
+            isHovered = false;
+            // Close submenu when sidebar is collapsed
+            if (submenuOpen) {
+                submenuOpen = false;
+                submenu.classList.remove('active');
+                document.querySelector('#survey-manager .fa-chevron-down').style.transform = 'rotate(0)';
+            }
+        });
+
+        // Show dashboard by default
+        document.addEventListener('DOMContentLoaded', function() {
+            showContent('dashboard');
+        });
     </script>
-
 </body>
-
 </html>

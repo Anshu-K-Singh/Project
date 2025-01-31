@@ -1,67 +1,100 @@
+{% extends 'surveyapp/home.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <!-- Link to the custom static CSS file -->
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<div class="main-content">
+    {% block content %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mx-4">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Dashboard</h2>
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Total Surveys -->
+            <div class="bg-blue-50 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                        <i class="fa fa-clipboard fa-lg text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-blue-600">Total Surveys</p>
+                        <p class="text-2xl font-semibold text-blue-900">{{ total_surveys }}</p>
+                    </div>
+                </div>
+            </div>
 
-<body style="background-image: url('{% static 'images/dashboard.jpg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat; height: 100vh; display: flex; justify-content: center; align-items: center; color: white;"></body>
+            <!-- Active Surveys -->
+            <div class="bg-green-50 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
+                        <i class="fa fa-check-circle fa-lg text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-green-600">Active Surveys</p>
+                        <p class="text-2xl font-semibold text-green-900">{{ active_surveys }}</p>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top navbar-transparent">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <img src="{% static 'images/logo.png' %}" alt="Logo" height="40">
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Whom We Serve</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'register' %}">Sign In</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-warning" href="{% url 'login' %}" role="button">Login</a>
-                    </li>
-                </ul>
+            <!-- Completed Surveys -->
+            <div class="bg-yellow-50 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-yellow-100 rounded-full p-3">
+                        <i class="fa fa-flag-checkered fa-lg text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-yellow-600">Completed Surveys</p>
+                        <p class="text-2xl font-semibold text-yellow-900">{{ completed_surveys }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Responses -->
+            <div class="bg-purple-50 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-full p-3">
+                        <i class="fa fa-users fa-lg text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-purple-600">Total Responses</p>
+                        <p class="text-2xl font-semibold text-purple-900">{{ total_responses }}</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <h1>Welcome to Our Platform</h1>
-                <!-- Add any main content here -->
+        <!-- Recent Surveys Table -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Recent Surveys</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Survey Name</th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Responses</th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for survey in surveys %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.title }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-sm {% if survey.status == 'Active' %}bg-green-100 text-green-800{% elif survey.status == 'Completed' %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %} rounded-full">
+                                    {{ survey.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.responses }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.completion_rate }}%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ survey.last_updated }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-
-    <!-- Text and Button Section -->
-    <div class="content-box">
-        <div class="text-container">
-            <h2>Earn, Create, Share & Collect</h2>
-            <a href="#" class="btn-know-more">Know More</a>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+    {% endblock %}
+</div>
