@@ -15,7 +15,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import AffiliateForm
 from .models import Surveymonitor
-from surveys.models import Survey, Response
+from surveys.models import Survey, Response, Question   
+from django.db.models import Count
+
 
 # Home view protected by login_required
 @login_required
@@ -69,11 +71,9 @@ def fetch_table_data(request):
     }
     return JsonResponse(data)
 
-#VIEWS FOR SURVEY MONITOR
-def survey_monitor(request):
-    # Fetch all surveys
-    surveys = Surveymonitor.objects.all()
-    return render(request, 'surveyapp/monitorsurvey.html', {'surveys': surveys})
+
+
+
 
 def affiliate_view(request):
     if request.method == 'POST':
@@ -84,3 +84,11 @@ def affiliate_view(request):
     else:
         form = AffiliateForm()
     return render(request, 'surveyapp/affiliate.html', {'form': form})
+
+
+    #VIEWS FOR SURVEY MONITOR
+def survey_monitor(request):
+    # Fetch all surveys
+    surveys = Survey.objects.annotate(num_responses=Count('responses'), num_questions=Count('questions'))
+    context = {'surveys': surveys}
+    return render(request, 'surveyapp/monitorsurvey.html', context)

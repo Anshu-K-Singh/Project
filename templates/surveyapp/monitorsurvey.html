@@ -1,142 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Survey History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding: 20px;
-        }
-        /* Increased badge size */
-        .badge {
-            font-size: 0.8rem; /* Smaller font */
-            padding: 5px 10px; /* Smaller padding */
-            border-radius: 12px; /* Rounded corners */
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Link the button to the 'add_survey' page -->
-        <a href="{% url 'surveys:home' %}" class="btn btn-warning mb-3">Add Survey</a>
-        
-        <div class="d-flex justify-content-end mb-3">
-            <span class="badge bg-primary me-2">Total</span>
-            <span class="badge bg-success me-2">Active</span>
-            <span class="badge bg-warning me-2">Inactive</span>
-            <span class="badge bg-danger">Closed</span>
+{% extends 'surveyapp/home.html' %}
+{% load static %}
+{% block content %}
+<div class="overflow-y-auto" style="max-height: 80vh;">
+    <div class="bg-white rounded-lg shadow-lg p-6 mx-4">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Survey Monitor</h2>
+        <!-- Add Survey button, this will redirect to the create_survey page -->
+        <a href="{% url 'surveys:home' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 mb-4">
+            <i class="fa fa-plus mr-2"></i> Add Survey
+        </a>
+        <!-- Survey Table displaying the created surveys -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Sr No.</th>
+                        {% comment %} <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th> {% endcomment %}
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Responses</th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Status</th> 
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for survey in surveys %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ forloop.counter }}</td>
+                        {% comment %} <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.title }}</td> {% endcomment %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <a href="{% url 'surveys:survey_detail' survey.id %}" class="text-blue-600 hover:text-blue-800">{{ survey.title }}</a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.created_at }}</td>
+                        
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.num_responses }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.is_active|yesno:"Active,Inactive" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <a href="{% url 'surveys:export_survey_csv' survey.id %}" class="text-blue-600 hover:text-blue-800" title="Download CSV">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </a>
+                            <a href="#" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fa fa-pencil" aria-hidden="true"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
-        <table class="table table-bordered table-responsive">
-            <thead class="table-dark">
-                <tr>
-                    <th>Sr No.</th>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>LOI</th>
-                    <th>Responses</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="surveyTableBody">
-                <!-- Dynamic rows will be inserted here -->
-            </tbody>
-        </table>
     </div>
-
-    <script>
-        // Empty placeholder for rows that will be populated dynamically
-        const surveys = [];
-
-        // Function to populate the table dynamically
-        function populateTable() {
-            const tableBody = document.getElementById("surveyTableBody");
-
-            // Loop through the surveys array and create rows
-            for (let i = 0; i < 10; i++) {
-                const row = document.createElement("tr");
-
-                // Create each cell
-                const srNoCell = document.createElement("td");
-                srNoCell.textContent = i + 1; // Row number
-                row.appendChild(srNoCell);
-
-                const codeCell = document.createElement("td");
-                codeCell.textContent = ''; // Empty for now
-                row.appendChild(codeCell);
-
-                const nameCell = document.createElement("td");
-                nameCell.textContent = ''; // Empty for now
-                row.appendChild(nameCell);
-
-                const startDateCell = document.createElement("td");
-                startDateCell.textContent = ''; // Empty for now
-                row.appendChild(startDateCell);
-
-                const endDateCell = document.createElement("td");
-                endDateCell.textContent = ''; // Empty for now
-                row.appendChild(endDateCell);
-
-                const loiCell = document.createElement("td");
-                loiCell.textContent = ''; // Empty for now
-                row.appendChild(loiCell);
-
-                const responsesCell = document.createElement("td");
-                responsesCell.textContent = ''; // Empty for now
-                row.appendChild(responsesCell);
-
-                // Create status cell with dynamic badge color
-                const statusCell = document.createElement("td");
-                const statusBadge = document.createElement("span");
-                statusBadge.classList.add("badge");
-
-                // Set badge color and text based on status
-                const status = i % 2 === 0 ? 'active' : 'inactive'; // Simulated status (alternating)
-                if (status === 'active') {
-                    statusBadge.classList.add("bg-success");
-                    statusBadge.textContent = 'Active';
-                } else {
-                    statusBadge.classList.add("bg-danger");
-                    statusBadge.textContent = 'Inactive';
-                }
-
-                statusCell.appendChild(statusBadge);
-                row.appendChild(statusCell);
-
-                const actionCell = document.createElement("td");
-                
-                // Edit icon (Bootstrap icon for pencil)
-                const editIcon = document.createElement("a");
-                editIcon.href = "#";
-                editIcon.className = "me-2";
-                editIcon.innerHTML = '<i class="bi bi-pencil"></i>';
-                
-                // Download icon (Bootstrap icon for download)
-                const downloadIcon = document.createElement("a");
-                downloadIcon.href = "#";
-                downloadIcon.className = "";
-                downloadIcon.innerHTML = '<i class="bi bi-download"></i>';
-                
-                actionCell.appendChild(editIcon);
-                actionCell.appendChild(downloadIcon);
-                row.appendChild(actionCell);
-
-                // Append the row to the table body
-                tableBody.appendChild(row);
-            }
-        }
-
-        // Call the function to populate the table
-        populateTable();
-    </script>
-
-    <!-- Include Bootstrap 5 and Bootstrap Icons -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-</body>
-</html>
+</div>
+{% endblock %}

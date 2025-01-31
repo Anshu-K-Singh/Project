@@ -6,7 +6,11 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Survey, Question, Choice, Response, Answer
 from .forms import SurveyForm, QuestionForm, ChoiceForm
+from django.db.models import Count
 import logging
+import csv
+from django.http import HttpResponse
+from django.utils.text import slugify
 
 class HomeView(LoginRequiredMixin, View):
     def get(self, request):
@@ -179,3 +183,47 @@ class SurveyResultsView(LoginRequiredMixin, View):
             'survey': survey,
             'results': results
         })
+
+class ExportSurveyCSVView(LoginRequiredMixin, View):
+    def get(self, request, survey_id):
+        # Get the survey
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        
+        # Create HttpResponse with CSV mime type
+        response = HttpResponse(content_type='text/csv')
+        
+        # Create a filename using survey title (slugified)
+        filename = f"{slugify(survey.title)}_responses.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Create CSV writer
+        writer = csv.writer(response)
+        
+        # Prepare headers: Response ID + Questions
+        headers = ['Response ID']
+        headers.extend([question.text for question in survey.questions.all()])
+        writer.writerow(headers)
+        
+        # Write response data
+        for response_obj in survey.responses.all():
+            row = [response_obj.id]
+            
+            # Get answers for each question
+            for question in survey.questions.all():
+                try:
+                    answer = response_obj.answers.get(question=question)
+                    
+                    # Handle different question types
+                    if question.question_type == 'text':
+                        row.append(answer.text_answer or '')
+                    elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                        # For choice-based questions, get choice text
+                        row.append(answer.choice_answer.text if answer.choice_answer else '')
+                    else:
+                        row.append('')
+                except Answer.DoesNotExist:
+                    row.append('')
+            
+            writer.writerow(row)
+        
+        return response
