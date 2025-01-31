@@ -4,46 +4,65 @@
     <meta charset="UTF-8">
     <title>Create Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .animated-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold mb-6">Create a New Survey</h1>
+<body class="animated-bg min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl w-full space-y-8 bg-white shadow-2xl rounded-xl p-8">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Create a New Survey</h2>
+            <p class="mt-2 text-sm text-gray-600">Design your survey with custom questions</p>
+        </div>
         
         {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded">
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded shadow-md">
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <form id="surveyForm" method="post" class="space-y-4">
+        <form id="surveyForm" method="post" class="space-y-6">
             {% csrf_token %}
             
-            <div>
-                <label class="block text-sm font-medium text-gray-700">{{ survey_form.title.label }}</label>
-                {{ survey_form.title }}
-                {% if survey_form.title.errors %}
-                <p class="text-red-500 text-sm mt-1">
-                    {% for error in survey_form.title.errors %}
-                        {{ error }}
-                    {% endfor %}
-                </p>
-                {% endif %}
-            </div>
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">{{ survey_form.title.label }}</label>
+                    {{ survey_form.title }}
+                    {% if survey_form.title.errors %}
+                    <p class="mt-2 text-sm text-red-600">
+                        {% for error in survey_form.title.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                    {% endif %}
+                </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700">{{ survey_form.description.label }}</label>
-                {{ survey_form.description }}
-                {% if survey_form.description.errors %}
-                <p class="text-red-500 text-sm mt-1">
-                    {% for error in survey_form.description.errors %}
-                        {{ error }}
-                    {% endfor %}
-                </p>
-                {% endif %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">{{ survey_form.description.label }}</label>
+                    {{ survey_form.description }}
+                    {% if survey_form.description.errors %}
+                    <p class="mt-2 text-sm text-red-600">
+                        {% for error in survey_form.description.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                    {% endif %}
+                </div>
             </div>
 
             <div id="questionsContainer">
@@ -51,12 +70,18 @@
             </div>
 
             <button type="button" onclick="addQuestion()" 
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition transform hover:scale-105">
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <i class="fas fa-plus text-blue-500 group-hover:text-blue-400"></i>
+                </span>
                 Add Question
             </button>
 
             <button type="submit" 
-                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition transform hover:scale-105">
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <i class="fas fa-save text-green-500 group-hover:text-green-400"></i>
+                </span>
                 Create Survey
             </button>
         </form>
