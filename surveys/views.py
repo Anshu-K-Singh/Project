@@ -235,3 +235,75 @@ class DeactivateSurveyView(LoginRequiredMixin, View):
         survey.save()
         messages.success(request, f"Survey '{survey.title}' has been deactivated.")
         return redirect('surveys:home')
+
+class EditSurveyView(LoginRequiredMixin, View):
+    def get(self, request, survey_id):
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        return render(request, 'surveys/edit_survey.html', {'survey': survey})
+    
+    def post(self, request, survey_id):
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        
+        # Update survey details
+        survey.title = request.POST.get('title')
+        survey.description = request.POST.get('description')
+        survey.save()
+        
+        # Prepare to track existing and new questions
+        existing_question_ids = list(survey.questions.values_list('id', flat=True))
+        
+        # Create new questions
+        question_texts = request.POST.getlist('question_text')
+        question_types = request.POST.getlist('question_type')
+        
+        for i, question_text in enumerate(question_texts):
+            # Check if this is an existing question or a new one
+            if i < len(existing_question_ids):
+                # Update existing question
+                question = Question.objects.get(id=existing_question_ids[i])
+                question.text = question_text
+                question.question_type = question_types[i]
+                question.save()
+            else:
+                # Create new question
+                question = Question.objects.create(
+                    survey=survey,
+                    text=question_text,
+                    question_type=question_types[i]
+                )
+            
+            # Handle choices for multiple choice, checkbox, and radio questions
+            if question_types[i] in ['multiple_choice', 'checkbox', 'radio']:
+                # Get existing choices for this question
+                existing_choices = list(question.choices.all())
+                
+                # Get new choices from form
+                choices_key = f'choices_{i}[]'
+                new_choice_texts = request.POST.getlist(choices_key)
+                
+                # Update or create choices
+                for j, choice_text in enumerate(new_choice_texts):
+                    if j < len(existing_choices):
+                        # Update existing choice
+                        existing_choice = existing_choices[j]
+                        existing_choice.text = choice_text
+                        existing_choice.save()
+                    else:
+                        # Create new choice
+                        Choice.objects.create(
+                            question=question,
+                            text=choice_text
+                        )
+                
+                # Remove any extra existing choices
+                if len(new_choice_texts) < len(existing_choices):
+                    for extra_choice in existing_choices[len(new_choice_texts):]:
+                        extra_choice.delete()
+        
+        # Remove any extra existing questions
+        if len(question_texts) < len(existing_question_ids):
+            for extra_question_id in existing_question_ids[len(question_texts):]:
+                Question.objects.get(id=extra_question_id).delete()
+        
+        messages.success(request, "Survey updated successfully!")
+        return redirect('surveys:survey_detail', survey_id=survey.id)
