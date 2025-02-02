@@ -14,11 +14,11 @@ from django.utils.text import slugify
 
 class HomeView(LoginRequiredMixin, View):
     def get(self, request):
-        user = request.user
-        surveys = Survey.objects.all().filter(user=user).order_by('-created_at')
+        # Filter only active surveys for the current user
+        surveys = Survey.objects.filter(user=request.user, is_active=True).order_by('-created_at')
         return render(request, 'surveys/home.html', {
             'surveys': surveys,
-            'user': user
+            'user': request.user
         })
 
 class CreateSurveyView(LoginRequiredMixin, View):
@@ -227,3 +227,11 @@ class ExportSurveyCSVView(LoginRequiredMixin, View):
             writer.writerow(row)
         
         return response
+
+class DeactivateSurveyView(LoginRequiredMixin, View):
+    def post(self, request, survey_id):
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        survey.is_active = False
+        survey.save()
+        messages.success(request, f"Survey '{survey.title}' has been deactivated.")
+        return redirect('surveys:home')

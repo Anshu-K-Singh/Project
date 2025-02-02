@@ -4,21 +4,65 @@
 <div class="overflow-y-auto" style="max-height: 80vh;">
     <div class="bg-white rounded-lg shadow-lg p-6 mx-4">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">Survey Monitor</h2>
-        <!-- Add Survey button, this will redirect to the create_survey page -->
+        
+        <!-- Filtering and Sorting Controls -->
+        <form method="get" class="mb-4 flex space-x-2">
+            <input type="text" name="name" placeholder="Filter by Name" 
+                   value="{{ name_filter }}" 
+                   class="px-2 py-1 border rounded">
+            
+            <select name="status" class="px-2 py-1 border rounded">
+                <option value="">All Statuses</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            
+            <button type="submit" class="px-4 py-1 bg-blue-500 text-white rounded">Filter</button>
+        </form>
+        
+        <!-- Add Survey button -->
         <a href="{% url 'surveys:home' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 mb-4">
             <i class="fa fa-plus mr-2"></i> Add Survey
         </a>
+        
         <!-- Survey Table displaying the created surveys -->
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white border border-gray-200">
                 <thead>
                     <tr class="bg-gray-50">
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Sr No.</th>
-                        {% comment %} <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th> {% endcomment %}
-                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Responses</th>
-                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Status</th> 
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?sort=title&order={% if sort_by == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                Name 
+                                {% if sort_by == 'title' %}
+                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?sort=created_at&order={% if sort_by == 'created_at' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                Created At 
+                                {% if sort_by == 'created_at' %}
+                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?sort=num_responses&order={% if sort_by == 'num_responses' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                Responses 
+                                {% if sort_by == 'num_responses' %}
+                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            <a href="?sort=is_active&order={% if sort_by == 'is_active' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                Status 
+                                {% if sort_by == 'is_active' %}
+                                    {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
                         <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
@@ -26,12 +70,10 @@
                     {% for survey in surveys %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ forloop.counter }}</td>
-                        {% comment %} <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.title }}</td> {% endcomment %}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <a href="{% url 'surveys:survey_detail' survey.id %}" class="text-blue-600 hover:text-blue-800">{{ survey.title }}</a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.created_at }}</td>
-                        
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.num_responses }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ survey.is_active|yesno:"Active,Inactive" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -16,6 +16,7 @@ class Survey(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     unique_link = models.CharField(max_length=16, unique=True, blank=True)
+    is_active = models.BooleanField(default=True)  # New field to track survey activation status
     
     def save(self, *args, **kwargs):
         if not self.unique_link:

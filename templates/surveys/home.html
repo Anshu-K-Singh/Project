@@ -72,6 +72,12 @@
                    class="w-full bg-green-50 text-green-700 hover:bg-green-100 py-2 px-4 rounded-lg text-center font-semibold transition-colors mt-2">
                     Take Survey
                 </a>
+                <form method="post" action="{% url 'surveys:deactivate_survey' survey.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 px-4 rounded-lg text-center font-semibold transition-colors mt-2" onclick="return confirm('Are you sure you want to deactivate this survey?');">
+                        Deactivate Survey
+                    </button>
+                </form>
             </div>
             {% endfor %}
         </div>

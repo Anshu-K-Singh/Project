@@ -45,6 +45,19 @@
                 Take Survey
             </a>
         </div>
+
+        {% if survey.is_active %}
+            <form method="post" action="{% url 'surveys:deactivate_survey' survey.id %}">
+                {% csrf_token %}
+                <button type="submit" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" onclick="return confirm('Are you sure you want to deactivate this survey?');">
+                    Deactivate Survey
+                </button>
+            </form>
+        {% else %}
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+                This survey has been deactivated.
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>

@@ -87,8 +87,41 @@ def affiliate_view(request):
 
 
     #VIEWS FOR SURVEY MONITOR
-def survey_monitor(request):
-    # Fetch all surveys
-    surveys = Survey.objects.annotate(num_responses=Count('responses'), num_questions=Count('questions'))
-    context = {'surveys': surveys}
+def monitorsurvey(request):
+    # Get sorting parameter
+    sort_by = request.GET.get('sort', 'created_at')
+    sort_order = request.GET.get('order', 'desc')
+    
+    # Get filter parameters
+    name_filter = request.GET.get('name', '')
+    status_filter = request.GET.get('status', '')
+    
+    # Base queryset
+    surveys = Survey.objects.filter(user=request.user)
+    
+    # Apply name filter
+    if name_filter:
+        surveys = surveys.filter(title__icontains=name_filter)
+    
+    # Apply status filter
+    if status_filter:
+        surveys = surveys.filter(is_active=(status_filter == 'active'))
+    
+    # Apply sorting
+    if sort_order == 'asc':
+        surveys = surveys.order_by(sort_by)
+    else:
+        surveys = surveys.order_by(f'-{sort_by}')
+    
+    # Annotate with number of responses
+    surveys = surveys.annotate(num_responses=Count('responses'))
+    
+    context = {
+        'surveys': surveys,
+        'sort_by': sort_by,
+        'sort_order': sort_order,
+        'name_filter': name_filter,
+        'status_filter': status_filter,
+    }
+    
     return render(request, 'surveyapp/monitorsurvey.html', context)
