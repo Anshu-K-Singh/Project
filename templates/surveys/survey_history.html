@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Survey History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Survey History</h2>
+            
+            <!-- Filtering and Sorting Controls -->
+            <form method="get" class="mb-4 flex space-x-2">
+                <input type="text" name="name" placeholder="Filter by Name" 
+                       value="{{ name_filter }}" 
+                       class="px-2 py-1 border rounded">
+                
+                <select name="status" class="px-2 py-1 border rounded">
+                    <option value="">All Statuses</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+                
+                <button type="submit" class="px-4 py-1 bg-blue-500 text-white rounded">Filter</button>
+            </form>
+            
+            <!-- Survey Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="?sort=title&order={% if sort_by == 'title' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    Name 
+                                    {% if sort_by == 'title' %}
+                                        {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="?sort=created_at&order={% if sort_by == 'created_at' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    Created At 
+                                    {% if sort_by == 'created_at' %}
+                                        {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="?sort=num_questions&order={% if sort_by == 'num_questions' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    Questions 
+                                    {% if sort_by == 'num_questions' %}
+                                        {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="?sort=num_responses&order={% if sort_by == 'num_responses' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    Responses 
+                                    {% if sort_by == 'num_responses' %}
+                                        {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="?sort=is_active&order={% if sort_by == 'is_active' and sort_order == 'asc' %}desc{% else %}asc{% endif %}{% if name_filter %}&name={{ name_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                    Status 
+                                    {% if sort_by == 'is_active' %}
+                                        {% if sort_order == 'asc' %}▲{% else %}▼{% endif %}
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for survey in surveys %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <a href="{% url 'surveys:survey_detail' survey.id %}" class="text-blue-600 hover:text-blue-800">
+                                    {{ survey.title }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ survey.created_at|date:"d M Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ survey.num_questions }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ survey.num_responses }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span class="{% if survey.is_active %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ survey.is_active|yesno:"Active,Inactive" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
+                                <a href="{% url 'surveys:survey_detail' survey.id %}" class="text-blue-600 hover:text-blue-800" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if survey.is_active %}
+                                <a href="{% url 'surveys:edit_survey' survey.id %}" class="text-green-600 hover:text-green-800" title="Edit Survey">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'surveys:deactivate_survey' survey.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Deactivate Survey">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-gray-500">
+                                No surveys found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
