@@ -31,9 +31,21 @@ class CreateSurveyView(LoginRequiredMixin, View):
     def post(self, request):
         survey_form = SurveyForm(request.POST)
         
+        # Collect question and choice data to re-populate the form
+        question_texts = request.POST.getlist('question_text')
+        question_types = request.POST.getlist('question_type')
+        
         if not survey_form.is_valid():
             return render(request, 'surveys/create_survey.html', {
-                'survey_form': survey_form
+                'survey_form': survey_form,
+                'existing_questions': [
+                    {
+                        'text': text, 
+                        'type': q_type,
+                        'choices': request.POST.getlist(f'choices_{i+1}[]') if q_type in ['multiple_choice', 'checkbox', 'radio'] else []
+                    } 
+                    for i, (text, q_type) in enumerate(zip(question_texts, question_types))
+                ]
             })
         
         # Get question and choice data directly from POST
@@ -338,7 +350,6 @@ class SurveyHistoryView(LoginRequiredMixin, View):
         # Annotate with number of responses and questions
         surveys = surveys.annotate(
             num_responses=Count('responses'),
-            num_questions=Count('questions')
         )
         
         context = {

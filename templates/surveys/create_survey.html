@@ -85,10 +85,91 @@
                 Create Survey
             </button>
         </form>
+
+        <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+                <h2 class="text-2xl font-bold mb-4 text-center">Confirm Survey Submission</h2>
+                <p class="text-gray-600 mb-6 text-center">Are you sure you want to submit this survey?</p>
+                <div class="flex justify-between">
+                    <button id="editSurveyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
+                        Edit Survey
+                    </button>
+                    <button id="confirmSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                        Confirm Submission
+                    </button>
+                    <button id="cancelSubmitBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         let questionCounter = 0;
+
+        // Function to re-populate existing questions after validation error
+        function repopulateQuestions() {
+            const existingQuestions = {{ existing_questions|safe|default:'[]' }};
+            const container = document.getElementById('questionsContainer');
+            
+            existingQuestions.forEach(question => {
+                questionCounter++;
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'border p-4 rounded mt-4 bg-gray-50 relative';
+                questionDiv.innerHTML = `
+                    <button type="button" onclick="this.closest('div').remove()" 
+                        class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                        ✕
+                    </button>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                        <input type="text" name="question_text" required 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                            value="${question.text}">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Question Type</label>
+                        <select name="question_type" onchange="toggleChoices(this)" 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="text" ${question.type === 'text' ? 'selected' : ''}>Text</option>
+                            <option value="multiple_choice" ${question.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
+                            <option value="checkbox" ${question.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                            <option value="radio" ${question.type === 'radio' ? 'selected' : ''}>Radio</option>
+                        </select>
+                    </div>
+                    <div id="choices_container_${questionCounter}" 
+                        class="${['multiple_choice', 'checkbox', 'radio'].includes(question.type) ? '' : 'hidden'}">
+                        <label class="block text-sm font-medium text-gray-700">Choices</label>
+                        <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
+                            ${question.choices.map((choice, index) => `
+                                <div class="flex items-center">
+                                    <input type="text" 
+                                        name="choices_${questionCounter}[]" 
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
+                                        placeholder="Enter choice"
+                                        value="${choice}">
+                                    <button type="button" onclick="removeChoice(this)" 
+                                        class="text-red-500 hover:text-red-700">
+                                        ✕
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" onclick="addChoice(${questionCounter})" 
+                            class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-1 px-2 rounded text-sm">
+                            Add Choice
+                        </button>
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        // Call repopulateQuestions when the page loads if there are existing questions
+        window.onload = function() {
+            repopulateQuestions();
+        };
 
         function addQuestion() {
             questionCounter++;
@@ -170,11 +251,19 @@
             }
         }
 
-        document.getElementById('surveyForm').addEventListener('submit', function(e) {
-            // Validate at least one question
+        const surveyForm = document.getElementById('surveyForm');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+        const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
+        const editSurveyBtn = document.getElementById('editSurveyBtn');
+
+        surveyForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop form from submitting immediately
+
+            // Validate form before showing modal
             const questions = document.querySelectorAll('input[name="question_text"]');
+            
             if (questions.length === 0) {
-                e.preventDefault();
                 alert('At least one question is required.');
                 return;
             }
@@ -191,12 +280,32 @@
                         .filter(value => value !== '');
                     
                     if (validChoices.length < 2) {
-                        e.preventDefault();
                         alert(`Question "${questionInput.value}" requires at least two choices.`);
                         return;
                     }
                 }
             });
+
+            // Show confirmation modal
+            confirmationModal.classList.remove('hidden');
+            confirmationModal.classList.add('flex');
+        });
+
+        confirmSubmitBtn.addEventListener('click', function() {
+            // Actually submit the form
+            surveyForm.submit();
+        });
+
+        cancelSubmitBtn.addEventListener('click', function() {
+            // Hide modal
+            confirmationModal.classList.add('hidden');
+            confirmationModal.classList.remove('flex');
+        });
+
+        editSurveyBtn.addEventListener('click', function() {
+            // Hide modal
+            confirmationModal.classList.add('hidden');
+            confirmationModal.classList.remove('flex');
         });
     </script>
 </body>
