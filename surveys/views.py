@@ -11,6 +11,10 @@ import logging
 import csv
 from django.http import HttpResponse
 from django.utils.text import slugify
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 
 class HomeView(LoginRequiredMixin, View):
     def get(self, request):
@@ -361,3 +365,66 @@ class SurveyHistoryView(LoginRequiredMixin, View):
         }
         
         return render(request, 'surveys/survey_history.html', context)
+
+class ExportSurveyPDFView(LoginRequiredMixin, View):
+    def get(self, request, survey_id):
+        # Get the survey
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        
+        # Create a response with PDF mime type
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="survey_{survey.title}_details.pdf"'
+        
+        # Create PDF document
+        doc = SimpleDocTemplate(response, pagesize=letter)
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        title_style = styles['Title'].clone('CustomTitle')
+        title_style.fontSize = 16
+        title_style.spaceAfter = 12
+
+        heading_style = styles['Heading2'].clone('CustomHeading')
+        heading_style.fontSize = 12
+        heading_style.spaceAfter = 6
+
+        normal_style = styles['Normal'].clone('CustomNormal')
+        normal_style.fontSize = 10
+        normal_style.spaceAfter = 6
+
+        # Collect story (content) for PDF
+        story = []
+        
+        # Survey Title
+        story.append(Paragraph("Survey Details", title_style))
+        story.append(Spacer(1, 6))
+        
+        # Survey Metadata
+        story.append(Paragraph(f"<b>Title:</b> {survey.title}", normal_style))
+        story.append(Paragraph(f"<b>Description:</b> {survey.description or 'No description provided'}", normal_style))
+        story.append(Paragraph(f"<b>Created On:</b> {survey.created_at.strftime('%B %d, %Y at %I:%M %p')}", normal_style))
+        story.append(Paragraph(f"<b>Total Questions:</b> {survey.questions.count()}", normal_style))
+        story.append(Spacer(1, 12))
+        
+        # Questions Section
+        story.append(Paragraph("Survey Questions", heading_style))
+        story.append(Spacer(1, 6))
+        
+        for index, question in enumerate(survey.questions.all(), 1):
+            # Question Header
+            story.append(Paragraph(f"Question {index}", normal_style))
+            story.append(Paragraph(f"<b>Text:</b> {question.text}", normal_style))
+            story.append(Paragraph(f"<b>Type:</b> {question.get_question_type_display()}", normal_style))
+            
+            # Choices for multiple choice questions
+            if question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                choices = question.choices.all()
+                if choices:
+                    choice_text = ", ".join([choice.text for choice in choices])
+                    story.append(Paragraph(f"<b>Choices:</b> {choice_text}", normal_style))
+            
+            story.append(Spacer(1, 12))
+        
+        # Build PDF
+        doc.build(story)
+        return response

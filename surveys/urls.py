@@ -8,7 +8,8 @@ from .views import (
     ExportSurveyCSVView,
     DeactivateSurveyView,
     EditSurveyView,
-    SurveyHistoryView
+    SurveyHistoryView,
+    ExportSurveyPDFView
 )
 
 app_name = 'surveys'
@@ -24,5 +25,5 @@ urlpatterns = [
     path('deactivate/<int:survey_id>/', DeactivateSurveyView.as_view(), name='deactivate_survey'),
     path('edit/<int:survey_id>/', EditSurveyView.as_view(), name='edit_survey'),
     path('history/', SurveyHistoryView.as_view(), name='survey_history'),
-    
+    path('export/pdf/<int:survey_id>/', ExportSurveyPDFView.as_view(), name='export_survey_pdf'),
 ]
