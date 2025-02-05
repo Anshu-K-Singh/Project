@@ -14,7 +14,7 @@ def complete_respondent_profile(request):
             form = RespondentProfileForm(request.POST, instance=respondent)
             if form.is_valid():
                 form.save()
-                return redirect('dashboard')  # Redirect to dashboard after profile completion
+                return redirect('respondent_app:dashboard')  # Redirect to dashboard after profile completion
         else:
             form = RespondentProfileForm(instance=respondent)
         
@@ -27,7 +27,7 @@ def complete_respondent_profile(request):
                 respondent = form.save(commit=False)
                 respondent.user = request.user
                 respondent.save()
-                return redirect('dashboard')
+                return redirect('respondent_app:dashboard')
         else:
             form = RespondentProfileForm()
         
@@ -49,8 +49,8 @@ def respondent_dashboard(request):
         ])
         
         if not profile_complete:
-            return redirect('complete_profile')
+            return redirect('respondent_app:complete_profile')
         
         return render(request, 'respondent_app/respondent_dashboard.html')
     except Respondent.DoesNotExist:
-        return redirect('complete_profile')
+        return redirect('respondent_app:complete_profile')

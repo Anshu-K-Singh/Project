@@ -1,0 +1,108 @@
+{% extends 'surveyapp/home.html' %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">{{ group.name }}</h1>
+            <p class="text-gray-600">{{ group.description }}</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'manage_groups' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                Back to Groups
+            </a>
+            <button id="editGroupBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                Edit Group
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-semibold">Group Details</h2>
+            <div class="grid grid-cols-2 gap-4 mt-2 text-gray-700">
+                <div>
+                    <strong>Created By:</strong> {{ group.created_by }}
+                </div>
+                <div>
+                    <strong>Created At:</strong> {{ group.created_at|date:"d M Y H:i" }}
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <h2 class="text-lg font-semibold mb-4">Respondents ({{ respondents|length }})</h2>
+            
+            {% if respondents %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Name</th>
+                            <th class="px-4 py-2 text-left">Username</th>
+                            <th class="px-4 py-2 text-left">Email</th>
+                            <th class="px-4 py-2 text-left">Mobile</th>
+                            <th class="px-4 py-2 text-left">Gender</th>
+                            <th class="px-4 py-2 text-left">Education</th>
+                            <th class="px-4 py-2 text-left">Employment</th>
+                            <th class="px-4 py-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for respondent in respondents %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">{{ respondent.full_name }}</td>
+                            <td class="px-4 py-2">{{ respondent.username }}</td>
+                            <td class="px-4 py-2">{{ respondent.email }}</td>
+                            <td class="px-4 py-2">{{ respondent.mobile }}</td>
+                            <td class="px-4 py-2">{{ respondent.gender }}</td>
+                            <td class="px-4 py-2">{{ respondent.education }}</td>
+                            <td class="px-4 py-2">{{ respondent.employment }}</td>
+                            <td class="px-4 py-2 text-right">
+                                <button onclick="removeRespondent({{ group.id }}, {{ respondent.id }})" 
+                                        class="text-red-500 hover:text-red-700">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-600 bg-gray-100 p-4 rounded">No respondents in this group.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function removeRespondent(groupId, respondentId) {
+    if (confirm('Are you sure you want to remove this respondent from the group?')) {
+        fetch(`/profiling/group/${groupId}/remove-respondent/${respondentId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Failed to remove respondent: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while removing the respondent');
+        });
+    }
+}
+
+// Placeholder for future edit group functionality
+document.getElementById('editGroupBtn').addEventListener('click', function() {
+    alert('Edit group functionality coming soon!');
+});
+</script>
+{% endblock %}

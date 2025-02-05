@@ -1,0 +1,331 @@
+{% extends 'surveyapp/home.html' %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-4">Completed Respondent Profiles</h1>
+    
+    <!-- Filter Section -->
+    <form id="filterForm" method="get" class="mb-6 bg-white shadow-md rounded-lg p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Gender Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Gender</label>
+                <select name="gender" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Genders</option>
+                    {% for gender, label in filter_choices.genders %}
+                    <option value="{{ gender }}" {% if current_filters.gender == gender %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Education Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Education</label>
+                <select name="education" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Education Levels</option>
+                    {% for education, label in filter_choices.educations %}
+                    <option value="{{ education }}" {% if current_filters.education == education %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Employment Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Employment</label>
+                <select name="employment" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Employment Types</option>
+                    {% for employment, label in filter_choices.employments %}
+                    <option value="{{ employment }}" {% if current_filters.employment == employment %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Race Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Race</label>
+                <select name="race" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Races</option>
+                    {% for race, label in filter_choices.races %}
+                    <option value="{{ race }}" {% if current_filters.race == race %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Job Function Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Job Function</label>
+                <select name="job_function" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Job Functions</option>
+                    {% for job_function, label in filter_choices.job_functions %}
+                    <option value="{{ job_function }}" {% if current_filters.job_function == job_function %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Job Industry Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Job Industry</label>
+                <select name="job_industry" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Industries</option>
+                    {% for job_industry, label in filter_choices.job_industries %}
+                    <option value="{{ job_industry }}" {% if current_filters.job_industry == job_industry %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Job Level Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Job Level</label>
+                <select name="job_level" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Job Levels</option>
+                    {% for job_level, label in filter_choices.job_levels %}
+                    <option value="{{ job_level }}" {% if current_filters.job_level == job_level %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Company Size Filter -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Company Size</label>
+                <select name="company_size" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">All Company Sizes</option>
+                    {% for company_size, label in filter_choices.company_sizes %}
+                    <option value="{{ company_size }}" {% if current_filters.company_size == company_size %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-4 flex space-x-4 items-center">
+            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                Apply Filters
+            </button>
+            <a href="{% url 'profiling' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                Clear Filters
+            </a>
+            
+            {% if completed_respondents %}
+            <button type="button" id="createGroupBtn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center">
+                <i class="fa fa-users mr-2"></i> Create Group
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'manage_groups' %}" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 flex items-center">
+                <i class="fa fa-cog mr-2"></i> Manage Groups
+            </a>
+        </div>
+    </form>
+
+    <!-- Respondent List -->
+    {% if completed_respondents %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <ul class="divide-y divide-gray-200">
+            {% for respondent in completed_respondents %}
+            <li class="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="text-blue-600 hover:underline" onclick="showRespondentDetails({{ respondent.id }})">
+                        {% if respondent.user.first_name or respondent.user.last_name %}
+                            {{ respondent.user.first_name }} {{ respondent.user.last_name }}
+                        {% else %}
+                            {{ respondent.user.username }}
+                        {% endif %}
+                    </a>
+                </div>
+                <button class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Add
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="mt-4 text-gray-600">
+        Total Completed Profiles: {{ completed_respondents|length }}
+    </div>
+    {% else %}
+    <p class="text-gray-600 bg-gray-100 p-4 rounded">No completed respondent profiles found.</p>
+    {% endif %}
+</div>
+
+<!-- Group Creation Modal -->
+<div id="createGroupModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
+    <div class="relative w-auto max-w-md mx-auto my-6">
+        <div class="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
+            <div class="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                <h3 class="text-2xl font-semibold">Create Respondent Group</h3>
+                <button class="float-right p-1 ml-auto text-3xl font-semibold leading-none text-black bg-transparent border-0 outline-none opacity-5 focus:outline-none" onclick="toggleGroupModal()">
+                    <span class="block w-6 h-6 text-2xl text-black bg-transparent opacity-5 outline-none focus:outline-none">×</span>
+                </button>
+            </div>
+            <div class="relative flex-auto p-6">
+                <form id="createGroupForm">
+                    <div class="mb-4">
+                        <label for="groupName" class="block text-gray-700 font-bold mb-2">Group Name</label>
+                        <input type="text" id="groupName" name="group_name" class="w-full px-3 py-2 border rounded-md" placeholder="Enter group name (optional)">
+                    </div>
+                </form>
+            </div>
+            <div class="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
+                <button class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-gray-600 uppercase transition-all duration-150 ease-linear bg-gray-200 rounded shadow outline-none hover:bg-gray-300 hover:shadow-lg focus:outline-none" type="button" onclick="toggleGroupModal()">
+                    Cancel
+                </button>
+                <button id="confirmCreateGroupBtn" class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear bg-green-500 rounded shadow outline-none active:bg-green-600 hover:shadow-lg focus:outline-none" type="button">
+                    Create Group
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Respondent Details Modal -->
+<div id="respondentModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
+    <div class="relative w-auto max-w-3xl mx-auto my-6">
+        <div class="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
+            <div class="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
+                <h3 class="text-2xl font-semibold" id="respondentModalTitle">Respondent Details</h3>
+                <button class="float-right p-1 ml-auto text-3xl font-semibold leading-none text-black bg-transparent border-0 outline-none opacity-5 focus:outline-none" onclick="toggleModal()">
+                    <span class="block w-6 h-6 text-2xl text-black bg-transparent opacity-5 outline-none focus:outline-none">×</span>
+                </button>
+            </div>
+            <div class="relative flex-auto p-6" id="respondentModalBody">
+                <!-- Respondent details will be dynamically inserted here -->
+            </div>
+            <div class="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
+                <button id="deleteRespondentBtn" class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear bg-red-500 rounded shadow outline-none active:bg-red-600 hover:shadow-lg focus:outline-none" type="button" style="display:none;">
+                    Delete Respondent
+                </button>
+                <button class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-gray-600 uppercase transition-all duration-150 ease-linear bg-gray-200 rounded shadow outline-none hover:bg-gray-300 hover:shadow-lg focus:outline-none" type="button" onclick="toggleModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const createGroupBtn = document.getElementById('createGroupBtn');
+    const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
+    
+    if (createGroupBtn) {
+        createGroupBtn.addEventListener('click', function() {
+            toggleGroupModal();
+        });
+    }
+    
+    if (confirmCreateGroupBtn) {
+        confirmCreateGroupBtn.addEventListener('click', function() {
+            const groupName = document.getElementById('groupName').value;
+            const filterParams = new URLSearchParams(window.location.search);
+            
+            fetch("{% url 'create_respondent_group' %}?" + filterParams.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `group_name=${encodeURIComponent(groupName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    toggleGroupModal();
+                } else {
+                    alert('Failed to create group: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the group');
+            });
+        });
+    }
+    
+    function toggleGroupModal() {
+        const modal = document.getElementById('createGroupModal');
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+    }
+});
+
+function showRespondentDetails(respondentId) {
+    fetch(`/profiling/respondent/${respondentId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const modalBody = document.getElementById('respondentModalBody');
+            const deleteBtn = document.getElementById('deleteRespondentBtn');
+            
+            // Populate modal with respondent details
+            modalBody.innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Email:</strong> ${data.email}</p>
+                    <p><strong>Name:</strong> ${data.first_name} ${data.last_name}</p>
+                    <p><strong>Mobile:</strong> ${data.mobile}</p>
+                    <p><strong>Date of Birth:</strong> ${data.dob}</p>
+                    <p><strong>Gender:</strong> ${data.gender}</p>
+                    <p><strong>Zipcode:</strong> ${data.zipcode}</p>
+                    <p><strong>Education:</strong> ${data.education}</p>
+                    <p><strong>Employment:</strong> ${data.employment}</p>
+                    <p><strong>Race:</strong> ${data.race}</p>
+                </div>
+            `;
+            
+            // Show delete button only for superusers
+            if (data.is_superuser) {
+                deleteBtn.style.display = 'block';
+                deleteBtn.onclick = () => deleteRespondent(respondentId);
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+            
+            toggleModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch respondent details');
+        });
+}
+
+function deleteRespondent(respondentId) {
+    if (confirm('Are you sure you want to delete this respondent? This action cannot be undone.')) {
+        fetch(`/profiling/respondent/${respondentId}/delete/`, { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();  // Reload the page after deletion
+                } else {
+                    alert('Failed to delete respondent');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the respondent');
+            });
+    }
+}
+
+function toggleModal() {
+    const modal = document.getElementById('respondentModal');
+    modal.classList.toggle('hidden');
+    modal.classList.toggle('flex');
+}
+
+function addRespondent(respondentId) {
+    // Placeholder for add respondent functionality
+    // You'll need to implement the actual logic for adding a respondent
+    fetch(`/profiling/respondent/${respondentId}/add/`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                alert('Respondent added successfully');
+                // Optionally reload the page or update the UI
+            } else {
+                alert('Failed to add respondent');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the respondent');
+        });
+}
+</script>
+{% endblock %}

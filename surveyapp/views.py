@@ -125,3 +125,315 @@ def monitorsurvey(request):
     }
     
     return render(request, 'surveyapp/monitorsurvey.html', context)
+
+@login_required
+def profiling(request):
+    # Fetch all respondents and filter based on profile completeness
+    from respondent_app.models import Respondent
+    
+    # Get all respondents and filter based on profile completeness
+    all_respondents = Respondent.objects.all()
+    completed_respondents = []
+    
+    for respondent in all_respondents:
+        profile_complete = all([
+            respondent.mobile, 
+            respondent.dob, 
+            respondent.gender, 
+            respondent.zipcode, 
+            respondent.education, 
+            respondent.employment, 
+            respondent.race
+        ])
+        
+        if profile_complete:
+            completed_respondents.append(respondent)
+    
+    # Apply filters from GET parameters
+    gender = request.GET.get('gender')
+    education = request.GET.get('education')
+    employment = request.GET.get('employment')
+    race = request.GET.get('race')
+    country = request.GET.get('country')
+    job_function = request.GET.get('job_function')
+    job_industry = request.GET.get('job_industry')
+    job_level = request.GET.get('job_level')
+    company_size = request.GET.get('company_size')
+    
+    # Apply filters
+    if gender:
+        completed_respondents = [r for r in completed_respondents if r.gender == gender]
+    if education:
+        completed_respondents = [r for r in completed_respondents if r.education == education]
+    if employment:
+        completed_respondents = [r for r in completed_respondents if r.employment == employment]
+    if race:
+        completed_respondents = [r for r in completed_respondents if r.race == race]
+    if country:
+        completed_respondents = [r for r in completed_respondents if r.country == country]
+    if job_function:
+        completed_respondents = [r for r in completed_respondents if r.job_function == job_function]
+    if job_industry:
+        completed_respondents = [r for r in completed_respondents if r.job_industry == job_industry]
+    if job_level:
+        completed_respondents = [r for r in completed_respondents if r.job_level == job_level]
+    if company_size:
+        completed_respondents = [r for r in completed_respondents if r.company_size == company_size]
+    
+    # Prepare filter choices
+    filter_choices = {
+        'genders': Respondent.GENDER_CHOICES,
+        'educations': Respondent.EDUCATION_CHOICES,
+        'employments': Respondent.EMPLOYMENT_CHOICES,
+        'races': Respondent.RACE_CHOICES,
+        'countries': Respondent.COUNTRY_CHOICES,
+        'job_functions': Respondent.JOB_FUNCTION_CHOICES,
+        'job_industries': Respondent.JOB_INDUSTRY_CHOICES,
+        'job_levels': Respondent.JOB_LEVEL_CHOICES,
+        'company_sizes': Respondent.COMPANY_SIZE_CHOICES,
+    }
+    
+    context = {
+        'completed_respondents': completed_respondents,
+        'title': 'Profiling',
+        'filter_choices': filter_choices,
+        'current_filters': {
+            'gender': gender,
+            'education': education,
+            'employment': employment,
+            'race': race,
+            'country': country,
+            'job_function': job_function,
+            'job_industry': job_industry,
+            'job_level': job_level,
+            'company_size': company_size,
+        }
+    }
+    
+    return render(request, 'surveyapp/profiling.html', context)
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
+from django.middleware.csrf import get_token
+from respondent_app.models import Respondent
+
+@login_required
+def get_respondent_details(request, respondent_id):
+    respondent = get_object_or_404(Respondent, id=respondent_id)
+    
+    # Prepare respondent details
+    details = {
+        'username': respondent.user.username,
+        'email': respondent.user.email,
+        'first_name': respondent.user.first_name,
+        'last_name': respondent.user.last_name,
+        'mobile': respondent.mobile or 'N/A',
+        'dob': respondent.dob.strftime('%d %B %Y') if respondent.dob else 'N/A',
+        'gender': respondent.gender or 'N/A',
+        'zipcode': respondent.zipcode or 'N/A',
+        'education': respondent.education or 'N/A',
+        'employment': respondent.employment or 'N/A',
+        'race': respondent.race or 'N/A',
+        'is_superuser': request.user.is_superuser
+    }
+    
+    return JsonResponse(details)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+@require_http_methods(["POST"])
+def delete_respondent(request, respondent_id):
+    respondent = get_object_or_404(Respondent, id=respondent_id)
+    
+    # Delete the associated user and respondent
+    user = respondent.user
+    respondent.delete()
+    user.delete()
+    
+    return JsonResponse({'status': 'success'})
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from respondent_app.models import RespondentGroup, Respondent
+from django.utils import timezone
+
+@login_required
+@require_http_methods(["POST"])
+def create_respondent_group(request):
+    # Get filter parameters from session or request
+    gender = request.GET.get('gender')
+    education = request.GET.get('education')
+    employment = request.GET.get('employment')
+    race = request.GET.get('race')
+    country = request.GET.get('country')
+    job_function = request.GET.get('job_function')
+    job_industry = request.GET.get('job_industry')
+    job_level = request.GET.get('job_level')
+    company_size = request.GET.get('company_size')
+    
+    # Get group name from POST data
+    group_name = request.POST.get('group_name', f'Group-{timezone.now().strftime("%Y%m%d%H%M%S")}')
+    
+    # Fetch all respondents and apply filters (same logic as in profiling view)
+    all_respondents = Respondent.objects.all()
+    filtered_respondents = []
+    
+    for respondent in all_respondents:
+        # Profile completeness check
+        profile_complete = all([
+            respondent.mobile, 
+            respondent.dob, 
+            respondent.gender, 
+            respondent.zipcode, 
+            respondent.education, 
+            respondent.employment, 
+            respondent.race
+        ])
+        
+        if not profile_complete:
+            continue
+        
+        # Apply filters
+        if gender and respondent.gender != gender:
+            continue
+        if education and respondent.education != education:
+            continue
+        if employment and respondent.employment != employment:
+            continue
+        if race and respondent.race != race:
+            continue
+        if country and respondent.country != country:
+            continue
+        if job_function and respondent.job_function != job_function:
+            continue
+        if job_industry and respondent.job_industry != job_industry:
+            continue
+        if job_level and respondent.job_level != job_level:
+            continue
+        if company_size and respondent.company_size != company_size:
+            continue
+        
+        filtered_respondents.append(respondent)
+    
+    # Create the group
+    try:
+        group = RespondentGroup.objects.create(
+            name=group_name, 
+            description=f'Group created from filtered respondents',
+            created_by=request.user
+        )
+        
+        # Add respondents to the group
+        group.respondents.add(*filtered_respondents)
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': f'Group "{group_name}" created with {len(filtered_respondents)} respondents',
+            'group_id': group.id
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=400)
+
+@login_required
+def manage_groups(request):
+    from respondent_app.models import RespondentGroup
+    
+    # Get all groups created by the current user
+    groups = RespondentGroup.objects.filter(created_by=request.user).order_by('-created_at')
+    
+    # Prepare context with group details
+    group_details = []
+    for group in groups:
+        group_details.append({
+            'id': group.id,
+            'name': group.name,
+            'description': group.description or 'No description',
+            'created_at': group.created_at,
+            'respondent_count': group.respondents.count()
+        })
+    
+    context = {
+        'groups': group_details,
+        'title': 'Manage Respondent Groups'
+    }
+    
+    return render(request, 'surveyapp/manage_groups.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def delete_group(request, group_id):
+    from respondent_app.models import RespondentGroup
+    
+    try:
+        group = get_object_or_404(RespondentGroup, id=group_id, created_by=request.user)
+        group.delete()
+        return JsonResponse({'status': 'success', 'message': 'Group deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def group_details(request, group_id):
+    from respondent_app.models import RespondentGroup
+    
+    # Get the group, ensuring it belongs to the current user
+    group = get_object_or_404(RespondentGroup, id=group_id, created_by=request.user)
+    
+    # Prepare respondent details
+    respondents = group.respondents.select_related('user').all()
+    respondent_details = []
+    
+    for respondent in respondents:
+        respondent_details.append({
+            'id': respondent.id,
+            'username': respondent.user.username,
+            'full_name': f"{respondent.user.first_name} {respondent.user.last_name}".strip() or respondent.user.username,
+            'email': respondent.user.email,
+            'mobile': respondent.mobile or 'N/A',
+            'gender': respondent.gender or 'N/A',
+            'education': respondent.education or 'N/A',
+            'employment': respondent.employment or 'N/A',
+            'job_function': respondent.job_function or 'N/A',
+            'job_industry': respondent.job_industry or 'N/A',
+        })
+    
+    context = {
+        'group': {
+            'id': group.id,
+            'name': group.name,
+            'description': group.description or 'No description',
+            'created_at': group.created_at,
+            'created_by': group.created_by.username,
+        },
+        'respondents': respondent_details,
+        'title': f'Group Details: {group.name}'
+    }
+    
+    return render(request, 'surveyapp/group_details.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def remove_respondent_from_group(request, group_id, respondent_id):
+    from respondent_app.models import RespondentGroup, Respondent
+    
+    try:
+        group = get_object_or_404(RespondentGroup, id=group_id, created_by=request.user)
+        respondent = get_object_or_404(Respondent, id=respondent_id)
+        
+        # Remove the respondent from the group
+        group.respondents.remove(respondent)
+        
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Respondent removed from group successfully'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=400)
