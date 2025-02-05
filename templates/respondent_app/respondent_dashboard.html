@@ -1,0 +1,21 @@
+{% extends 'respondent_app/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12 d-flex justify-content-end mb-3">
+            <a href="{% url 'logout' %}" class="btn btn-danger">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+    <h1>Respondent Dashboard</h1>
+    <p>Welcome, {{ user.username }}!</p>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Your Profile</h5>
+            <p>Profile is complete and ready for surveys.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

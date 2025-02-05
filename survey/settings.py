@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'surveyapp',
     'account_app',
     "surveys",
+    "respondent_app",
 ]
 
 MIDDLEWARE = [

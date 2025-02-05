@@ -7,6 +7,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from .forms import UserRegisterForm
 
+
+
 def login_view(request):
     """Handle user login."""
     if request.method == 'POST':
@@ -16,9 +18,13 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
 
-            # Handle the 'next' parameter, redirect to it after login, default to 'home'
-            next_url = request.GET.get('next', 'home')
-            return redirect(next_url)  # Redirect to the next page after login
+            # Custom redirection logic
+            if user.is_superuser:
+                # Superusers go to home page
+                return redirect('home')
+            else:
+                # Regular users go to respondent dashboard
+                return redirect('dashboard')
         else:
             messages.error(request, "Invalid credentials. Please try again.")
     else:
@@ -41,12 +47,21 @@ def register(request):
             user = form.save()
             login(request, user)
             messages.success(request, f"Account created successfully for {user.username}!")
-            return redirect('home')  # Redirect to home after successful registration
-        else:
-            messages.error(request, "There was an error with your registration. Please try again.")
+            
+            # Attempt to create a Respondent profile
+            try:
+                from respondent_app.models import Respondent
+                # Check if a Respondent profile already exists
+                respondent, created = Respondent.objects.get_or_create(user=user)
+                
+                # Always redirect to complete profile after registration
+                return redirect('complete_profile')
+            except Exception as e:
+                messages.warning(request, f"Could not create respondent profile: {e}")
+                return redirect('home')
     else:
         form = UserRegisterForm()
-
+    
     return render(request, 'account_app/register.html', {'form': form})
 
 def logout_view(request):
