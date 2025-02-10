@@ -139,3 +139,14 @@ LOGIN_REDIRECT_URL = 'login/'
 
 SESSION_COOKIE_AGE = 3600  # 1 hour in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Ensures the session expires when the browser is closed
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_HOST = 'smtp.gmail.com'  # Use the email provider's SMTP host
+EMAIL_PORT = 587  # Usually 587 for TLS
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'k9907485@gmail.com'  # Your email address
+EMAIL_HOST_PASSWORD = 'ejrckvisitufxftl'  # Your email password
+DEFAULT_FROM_EMAIL = 'k9907485@gmail.com'  # Your email address

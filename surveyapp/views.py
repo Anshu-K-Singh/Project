@@ -17,10 +17,16 @@ from .forms import AffiliateForm
 from .models import Surveymonitor
 from surveys.models import Survey, Response, Question   
 from django.db.models import Count
+from django.contrib.auth.decorators import user_passes_test
+
+def is_superuser(user):
+    return user.is_authenticated and user.is_superuser
+
 
 
 # Home view protected by login_required
-@login_required
+
+@user_passes_test(is_superuser, login_url='/account/login/')
 def home(request):
     # You can pass context to the template
     context = {

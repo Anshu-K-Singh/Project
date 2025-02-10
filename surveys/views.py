@@ -19,6 +19,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from respondent_app.models import RespondentGroup
 
+
 class HomeView(LoginRequiredMixin, View):
     def get(self, request):
         # Filter only active surveys for the current user
@@ -456,73 +457,77 @@ class ExportSurveyPDFView(LoginRequiredMixin, View):
         doc.build(story)
         return response
 
+
+
+
 class SendSurveyToGroupView(LoginRequiredMixin, View):
     def post(self, request, survey_id):
-        # Get the survey
         survey = get_object_or_404(Survey, id=survey_id, user=request.user)
-        
-        # Get the selected group ID from the form
         group_id = request.POST.get('respondent_group')
-        
+
         if not group_id:
             messages.error(request, "Please select a respondent group.")
             return redirect('surveys:survey_detail', survey_id=survey_id)
-        
+
         try:
-            # Get the selected respondent group
             group = RespondentGroup.objects.get(id=group_id, created_by=request.user)
-            
-            # Get all users in the group
             group_users = group.respondents.all()
-            
+
             if not group_users:
                 messages.warning(request, "The selected group has no respondents.")
                 return redirect('surveys:survey_detail', survey_id=survey_id)
-            
-            # Count of users the survey was sent to
+
             sent_count = 0
             notification_count = 0
-            
-            # Send survey to each user in the group
+
             for respondent in group_users:
-                # Check if the user has already responded to this survey
-                existing_response = Response.objects.filter(
-                    survey=survey, 
-                    user=respondent.user
-                ).exists()
-                
+                existing_response = Response.objects.filter(survey=survey, user=respondent.user).exists()
+
                 if not existing_response:
-                    # Create a notification for the user
                     notification, created = SurveyNotification.objects.get_or_create(
                         user=respondent.user,
                         survey=survey,
                         defaults={'is_read': False}
                     )
-                    
+
                     if created:
                         notification_count += 1
                         sent_count += 1
-                        messages.success(
-                            request, 
-                            f"Survey notification sent to {respondent.user.username} in group {group.name}"
+                        messages.success(request, f"Survey notification sent to {respondent.user.username} in group {group.name}")
+
+                        # Debugging output
+                        print(f"Preparing email for {respondent.user.username}")
+
+                        subject = f"New Survey Available: {survey.title}"
+                        message = (
+                            f"Hello {respondent.user.username},\n\n"
+                            f"You have been invited to take part in a new survey: \"{survey.title}\".\n"
+                            f"Click the link below to participate:\n"
+                            f"Thank you!"
                         )
-            
+                        recipient_email = respondent.user.email
+
+                        if recipient_email:
+                           
+                            try:
+                                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email])
+                               
+                            except Exception as e:
+                                print(f"Email error: {str(e)}")
+                        else:
+                            print(f"Skipping email: No email found for {respondent.user.username}")
+
             if sent_count > 0:
-                messages.success(
-                    request, 
-                    f"Survey notifications sent to {notification_count} respondents in the {group.name} group."
-                )
+                messages.success(request, f"Survey notifications sent to {notification_count} respondents in the {group.name} group.")
             else:
-                messages.info(
-                    request, 
-                    "No new respondents were found for this survey in the selected group."
-                )
-            
+                messages.info(request, "No new respondents were found for this survey in the selected group.")
+
             return redirect('surveys:survey_detail', survey_id=survey_id)
-        
+
         except RespondentGroup.DoesNotExist:
             messages.error(request, "Selected respondent group not found.")
             return redirect('surveys:survey_detail', survey_id=survey_id)
         except Exception as e:
+            print(f"View error: {str(e)}")  # Debugging
             messages.error(request, f"An error occurred: {str(e)}")
             return redirect('surveys:survey_detail', survey_id=survey_id)
