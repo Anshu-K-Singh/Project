@@ -32,6 +32,6 @@ class AnswerAdmin(admin.ModelAdmin):
 
 @admin.register(Response)
 class ResponseAdmin(admin.ModelAdmin):
-    list_display = ('survey', 'submitted_at')
-    fields = ('survey', 'submitted_at')
-    list_filter = ('submitted_at',) 
+    list_display = ('survey', 'user')
+    fields = ('survey', 'user')
+    noneditable_fields = ('submitted_at',)

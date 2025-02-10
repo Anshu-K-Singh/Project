@@ -1,20 +1,53 @@
 {% extends 'respondent_app/base.html' %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Respondent Dashboard</h1>
+
+    {% if unread_notifications %}
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h2 class="text-xl font-semibold mb-4">New Surveys Available</h2>
+        <div class="space-y-4">
+            {% for notification in unread_notifications %}
+            <div class="bg-blue-100 border-l-4 border-blue-500 p-4 relative">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">{{ notification.survey.title }}</h3>
+                        <p class="text-gray-600">
+                            Created by {{ notification.survey.user.username }} 
+                            on {{ notification.survey.created_at|date:"F d, Y" }}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'surveys:take_survey' unique_link=notification.survey.unique_link %}" 
+                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Take Survey
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
+        <h2 class="text-xl font-semibold mb-4">Your Profile</h2>
+        <!-- Add profile details here -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <strong>Name:</strong> {{ user.get_full_name|default:user.username }}
+                <br>
+                <strong>Email:</strong> {{ user.email }}
+            </div>
+            <!-- Add more profile details as needed -->
+        </div>
+    </div>
     <div class="row">
         <div class="col-12 d-flex justify-content-end mb-3">
             <a href="{% url 'logout' %}" class="btn btn-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
-        </div>
-    </div>
-    <h1>Respondent Dashboard</h1>
-    <p>Welcome, {{ user.username }}!</p>
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Your Profile</h5>
-            <p>Profile is complete and ready for surveys.</p>
         </div>
     </div>
 </div>

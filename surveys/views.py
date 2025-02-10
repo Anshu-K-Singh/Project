@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Survey, Question, Choice, Response, Answer
+from .models import Survey, Question, Choice, Response, Answer, SurveyDistribution, SurveyNotification
 from .forms import SurveyForm, QuestionForm, ChoiceForm
 from django.db.models import Count
 import logging
@@ -15,6 +15,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+from django.core.mail import send_mail
+from django.conf import settings
+from respondent_app.models import RespondentGroup
 
 class HomeView(LoginRequiredMixin, View):
     def get(self, request):
@@ -110,15 +113,39 @@ class CreateSurveyView(LoginRequiredMixin, View):
 class SurveyDetailView(LoginRequiredMixin, View):
     def get(self, request, survey_id):
         survey = get_object_or_404(Survey, id=survey_id, user=request.user)
-        return render(request, 'surveys/survey_detail.html', {'survey': survey})
+        
+        # Get user's respondent groups
+        respondent_groups = RespondentGroup.objects.filter(created_by=request.user)
+        
+        # Get survey distribution history
+        distribution_history = SurveyDistribution.objects.filter(survey=survey).order_by('-created_at')
+        
+        return render(request, 'surveys/survey_detail.html', {
+            'survey': survey,
+            'respondent_groups': respondent_groups,
+            'distribution_history': distribution_history
+        })
 
-class TakeSurveyView(View):
+class TakeSurveyView(LoginRequiredMixin, View):
     def get(self, request, unique_link):
         survey = get_object_or_404(Survey, unique_link=unique_link)
+        
+        # Check if user has already responded to this survey
+        existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
+        if existing_response:
+            messages.warning(request, "You have already responded to this survey.")
+            return redirect('surveys:home')  # Redirect to home or another appropriate page
+        
         return render(request, 'surveys/take_survey.html', {'survey': survey})
     
     def post(self, request, unique_link):
         survey = get_object_or_404(Survey, unique_link=unique_link)
+        
+        # Check if user has already responded to this survey
+        existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
+        if existing_response:
+            messages.warning(request, "You have already responded to this survey.")
+            return redirect('surveys:home')  # Redirect to home or another appropriate page
         
         # Validate all questions are answered
         for question in survey.questions.all():
@@ -127,8 +154,8 @@ class TakeSurveyView(View):
                 messages.error(request, f"Question '{question.text}' must be answered.")
                 return render(request, 'surveys/take_survey.html', {'survey': survey})
         
-        # Create a new response
-        response = Response.objects.create(survey=survey)
+        # Create a new response with the logged-in user
+        response = Response.objects.create(survey=survey, user=request.user)
         
         # Process answers for each question
         for question in survey.questions.all():
@@ -428,3 +455,74 @@ class ExportSurveyPDFView(LoginRequiredMixin, View):
         # Build PDF
         doc.build(story)
         return response
+
+class SendSurveyToGroupView(LoginRequiredMixin, View):
+    def post(self, request, survey_id):
+        # Get the survey
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        
+        # Get the selected group ID from the form
+        group_id = request.POST.get('respondent_group')
+        
+        if not group_id:
+            messages.error(request, "Please select a respondent group.")
+            return redirect('surveys:survey_detail', survey_id=survey_id)
+        
+        try:
+            # Get the selected respondent group
+            group = RespondentGroup.objects.get(id=group_id, created_by=request.user)
+            
+            # Get all users in the group
+            group_users = group.respondents.all()
+            
+            if not group_users:
+                messages.warning(request, "The selected group has no respondents.")
+                return redirect('surveys:survey_detail', survey_id=survey_id)
+            
+            # Count of users the survey was sent to
+            sent_count = 0
+            notification_count = 0
+            
+            # Send survey to each user in the group
+            for respondent in group_users:
+                # Check if the user has already responded to this survey
+                existing_response = Response.objects.filter(
+                    survey=survey, 
+                    user=respondent.user
+                ).exists()
+                
+                if not existing_response:
+                    # Create a notification for the user
+                    notification, created = SurveyNotification.objects.get_or_create(
+                        user=respondent.user,
+                        survey=survey,
+                        defaults={'is_read': False}
+                    )
+                    
+                    if created:
+                        notification_count += 1
+                        sent_count += 1
+                        messages.success(
+                            request, 
+                            f"Survey notification sent to {respondent.user.username} in group {group.name}"
+                        )
+            
+            if sent_count > 0:
+                messages.success(
+                    request, 
+                    f"Survey notifications sent to {notification_count} respondents in the {group.name} group."
+                )
+            else:
+                messages.info(
+                    request, 
+                    "No new respondents were found for this survey in the selected group."
+                )
+            
+            return redirect('surveys:survey_detail', survey_id=survey_id)
+        
+        except RespondentGroup.DoesNotExist:
+            messages.error(request, "Selected respondent group not found.")
+            return redirect('surveys:survey_detail', survey_id=survey_id)
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return redirect('surveys:survey_detail', survey_id=survey_id)

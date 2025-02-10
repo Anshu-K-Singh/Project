@@ -9,11 +9,11 @@ from .views import (
     DeactivateSurveyView,
     EditSurveyView,
     SurveyHistoryView,
-    ExportSurveyPDFView
+    ExportSurveyPDFView,
+    SendSurveyToGroupView
 )
 
 app_name = 'surveys'
-
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
@@ -23,7 +23,8 @@ urlpatterns = [
     path('survey/<int:survey_id>/results/', SurveyResultsView.as_view(), name='survey_results'),
     path('export-csv/<int:survey_id>/', ExportSurveyCSVView.as_view(), name='export_survey_csv'),
     path('deactivate/<int:survey_id>/', DeactivateSurveyView.as_view(), name='deactivate_survey'),
-    path('edit/<int:survey_id>/', EditSurveyView.as_view(), name='edit_survey'),
-    path('history/', SurveyHistoryView.as_view(), name='survey_history'),
-    path('export/pdf/<int:survey_id>/', ExportSurveyPDFView.as_view(), name='export_survey_pdf'),
+    path('survey/<int:survey_id>/edit/', EditSurveyView.as_view(), name='edit_survey'),
+    path('survey/history/', SurveyHistoryView.as_view(), name='survey_history'),
+    path('export-pdf/<int:survey_id>/', ExportSurveyPDFView.as_view(), name='export_survey_pdf'),
+    path('survey/<int:survey_id>/send-to-group/', SendSurveyToGroupView.as_view(), name='send_survey_to_group'),
 ]

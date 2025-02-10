@@ -24,7 +24,7 @@ def login_view(request):
                 return redirect('home')
             else:
                 # Regular users go to respondent dashboard
-                return redirect('dashboard')
+                return redirect('respondent_app:dashboard')
         else:
             messages.error(request, "Invalid credentials. Please try again.")
     else:
@@ -55,7 +55,7 @@ def register(request):
                 respondent, created = Respondent.objects.get_or_create(user=user)
                 
                 # Always redirect to complete profile after registration
-                return redirect('complete_profile')
+                return redirect('respondent_app:complete_profile')
             except Exception as e:
                 messages.warning(request, f"Could not create respondent profile: {e}")
                 return redirect('home')

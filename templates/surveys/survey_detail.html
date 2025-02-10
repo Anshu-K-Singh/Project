@@ -44,8 +44,34 @@
                 class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                 Take Survey
             </a>
-           
         </div>
+
+        {% if survey.is_active %}
+            <div class="mt-6">
+                <h2 class="text-xl font-semibold mb-4">Send Survey to Respondent Group</h2>
+                <form method="post" action="{% url 'surveys:send_survey_to_group' survey_id=survey.id %}" class="bg-gray-100 p-4 rounded">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="respondent_group" class="block text-gray-700 text-sm font-bold mb-2">
+                            Select Respondent Group
+                        </label>
+                        <select name="respondent_group" id="respondent_group" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="">-- Select a Group --</option>
+                            {% for group in request.user.respondentgroup_set.all %}
+                                <option value="{{ group.id }}">{{ group.name }} ({{ group.respondents.count }} respondents)</option>
+                            {% empty %}
+                                <option disabled>No groups available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Send Survey
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <p class="text-red-500">This survey is currently inactive.</p>
+        {% endif %}
     </div>
 </body>
 </html>

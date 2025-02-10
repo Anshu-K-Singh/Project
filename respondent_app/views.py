@@ -2,8 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import RespondentProfileForm
 from .models import Respondent
-
-
+from surveys.models import SurveyNotification
 
 # Create your views here.
 @login_required
@@ -51,6 +50,16 @@ def respondent_dashboard(request):
         if not profile_complete:
             return redirect('respondent_app:complete_profile')
         
-        return render(request, 'respondent_app/respondent_dashboard.html')
+        # Get unread survey notifications
+        unread_notifications = SurveyNotification.objects.filter(
+            user=request.user, 
+            is_read=False
+        ).select_related('survey')
+        
+        context = {
+            'unread_notifications': unread_notifications,
+        }
+        
+        return render(request, 'respondent_app/respondent_dashboard.html', context)
     except Respondent.DoesNotExist:
         return redirect('respondent_app:complete_profile')
