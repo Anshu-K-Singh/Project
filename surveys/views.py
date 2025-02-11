@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Survey, Question, Choice, Response, Answer, SurveyDistribution, SurveyNotification
 from .forms import SurveyForm, QuestionForm, ChoiceForm
-from django.db.models import Count
+from django.db.models import Count, F
 import logging
 import csv
 from django.http import HttpResponse
@@ -18,6 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from django.core.mail import send_mail
 from django.conf import settings
 from respondent_app.models import RespondentGroup
+from django.utils import timezone
 
 
 class HomeView(LoginRequiredMixin, View):
@@ -127,26 +128,56 @@ class SurveyDetailView(LoginRequiredMixin, View):
             'distribution_history': distribution_history
         })
 
-class TakeSurveyView(LoginRequiredMixin, View):
+class TakeSurveyView(View):
     def get(self, request, unique_link):
-        survey = get_object_or_404(Survey, unique_link=unique_link)
+        # Try to find survey by unique_link (for authenticated users)
+        survey = Survey.objects.filter(unique_link=unique_link).first()
+        if not survey:
+            # Try to find survey by external_link (for anonymous users)
+            survey = get_object_or_404(Survey, external_link=unique_link)
         
-        # Check if user has already responded to this survey
-        existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
-        if existing_response:
-            messages.warning(request, "You have already responded to this survey.")
-            return redirect('surveys:home')  # Redirect to home or another appropriate page
+        # Check survey expiry
+        if survey.expiry_datetime and timezone.now() > survey.expiry_datetime:
+            survey.is_expired = True
+            survey.save(update_fields=['is_expired'])
+            return render(request, 'surveys/survey_closed.html', {'survey': survey})
+
+        # Check if external response limit is reached
+        if survey.max_external_responses and survey.external_response_count >= survey.max_external_responses:
+            return render(request, 'surveys/survey_closed.html', {'survey': survey})
+
+        # For authenticated users, check if they've already responded
+        if request.user.is_authenticated:
+            existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
+            if existing_response:
+                messages.warning(request, "You have already responded to this survey.")
+                return redirect('surveys:home')
         
         return render(request, 'surveys/take_survey.html', {'survey': survey})
-    
+
     def post(self, request, unique_link):
-        survey = get_object_or_404(Survey, unique_link=unique_link)
+        # Try to find survey by unique_link (for authenticated users)
+        survey = Survey.objects.filter(unique_link=unique_link).first()
+        if not survey:
+            # Try to find survey by external_link (for anonymous users)
+            survey = get_object_or_404(Survey, external_link=unique_link)
         
-        # Check if user has already responded to this survey
-        existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
-        if existing_response:
-            messages.warning(request, "You have already responded to this survey.")
-            return redirect('surveys:home')  # Redirect to home or another appropriate page
+        # Check survey expiry
+        if survey.expiry_datetime and timezone.now() > survey.expiry_datetime:
+            survey.is_expired = True
+            survey.save(update_fields=['is_expired'])
+            return render(request, 'surveys/survey_closed.html', {'survey': survey})
+
+        # Check if external response limit is reached
+        if survey.max_external_responses and survey.external_response_count >= survey.max_external_responses:
+            return render(request, 'surveys/survey_closed.html', {'survey': survey})
+
+        # For authenticated users, check if they've already responded
+        if request.user.is_authenticated:
+            existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
+            if existing_response:
+                messages.warning(request, "You have already responded to this survey.")
+                return redirect('surveys:home')
         
         # Validate all questions are answered
         for question in survey.questions.all():
@@ -155,29 +186,37 @@ class TakeSurveyView(LoginRequiredMixin, View):
                 messages.error(request, f"Question '{question.text}' must be answered.")
                 return render(request, 'surveys/take_survey.html', {'survey': survey})
         
-        # Create a new response with the logged-in user
-        response = Response.objects.create(survey=survey, user=request.user)
-        
-        # Process answers for each question
-        for question in survey.questions.all():
-            if question.question_type == 'text':
-                text_answer = request.POST.get(f'question_{question.id}')
-                if text_answer:
-                    Answer.objects.create(
-                        response=response,
-                        question=question,
-                        text_answer=text_answer
-                    )
-            elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
-                # Handle multiple choice, checkbox, and radio answers
-                choice_ids = request.POST.getlist(f'question_{question.id}')
-                for choice_id in choice_ids:
-                    choice = Choice.objects.get(id=choice_id)
-                    Answer.objects.create(
-                        response=response,
-                        question=question,
-                        choice_answer=choice
-                    )
+        # Create a new response
+        with transaction.atomic():
+            response = Response.objects.create(
+                survey=survey,
+                user=request.user if request.user.is_authenticated else None
+            )
+            
+            # Process answers for each question
+            for question in survey.questions.all():
+                if question.question_type == 'text':
+                    text_answer = request.POST.get(f'question_{question.id}')
+                    if text_answer:
+                        Answer.objects.create(
+                            response=response,
+                            question=question,
+                            text_answer=text_answer
+                        )
+                elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                    choice_ids = request.POST.getlist(f'question_{question.id}')
+                    for choice_id in choice_ids:
+                        choice = Choice.objects.get(id=choice_id)
+                        Answer.objects.create(
+                            response=response,
+                            question=question,
+                            choice_answer=choice
+                        )
+            
+            # Increment external response count if it's an external response
+            if not request.user.is_authenticated:
+                survey.external_response_count = F('external_response_count') + 1
+                survey.save()
         
         messages.success(request, "Survey submitted successfully!")
         return render(request, 'surveys/survey_completed.html')
@@ -457,8 +496,27 @@ class ExportSurveyPDFView(LoginRequiredMixin, View):
         doc.build(story)
         return response
 
-
-
+class UpdateExternalResponsesView(LoginRequiredMixin, View):
+    def post(self, request, survey_id):
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        try:
+            max_responses = int(request.POST.get('max_external_responses', 0))
+            if max_responses < 0:
+                raise ValueError("Maximum responses cannot be negative")
+            
+            # If new limit is less than current count, show error
+            if max_responses > 0 and max_responses < survey.external_response_count:
+                messages.error(request, 
+                    f"Cannot set maximum responses to {max_responses} as there are already {survey.external_response_count} responses collected.")
+                return redirect('surveys:survey_detail', survey_id=survey.id)
+            
+            survey.max_external_responses = max_responses if max_responses > 0 else None
+            survey.save()
+            messages.success(request, "Maximum external responses updated successfully!")
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('surveys:survey_detail', survey_id=survey.id)
 
 class SendSurveyToGroupView(LoginRequiredMixin, View):
     def post(self, request, survey_id):
@@ -531,3 +589,39 @@ class SendSurveyToGroupView(LoginRequiredMixin, View):
             print(f"View error: {str(e)}")  # Debugging
             messages.error(request, f"An error occurred: {str(e)}")
             return redirect('surveys:survey_detail', survey_id=survey_id)
+
+class UpdateSurveyExpiryView(LoginRequiredMixin, View):
+    def post(self, request, survey_id):
+        survey = get_object_or_404(Survey, id=survey_id, user=request.user)
+        
+        try:
+            # Get expiry datetime from form
+            expiry_str = request.POST.get('expiry_datetime')
+            
+            if expiry_str:
+                # Parse the datetime 
+                expiry_datetime = timezone.datetime.fromisoformat(expiry_str)
+                
+                # Ensure the datetime is timezone-aware
+                if timezone.is_naive(expiry_datetime):
+                    expiry_datetime = timezone.make_aware(expiry_datetime)
+                
+                # Update survey expiry
+                survey.expiry_datetime = expiry_datetime
+                survey.check_expiry()  # This will set is_expired if needed
+                survey.save()
+                
+                messages.success(request, f"Survey expiry set to {expiry_datetime}")
+            else:
+                # If no datetime provided, clear the expiry
+                survey.expiry_datetime = None
+                survey.is_expired = False
+                survey.save()
+                
+                messages.success(request, "Survey expiry cleared")
+            
+            return redirect('surveys:survey_detail', survey_id=survey.id)
+        
+        except ValueError:
+            messages.error(request, "Invalid datetime format")
+            return redirect('surveys:survey_detail', survey_id=survey.id)

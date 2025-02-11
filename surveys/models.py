@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.crypto import get_random_string
 from django.conf import settings
+from django.utils import timezone
 
 # Create your models here.
 
@@ -16,12 +17,35 @@ class Survey(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     unique_link = models.CharField(max_length=16, unique=True, blank=True)
+    external_link = models.CharField(max_length=16, unique=True, blank=True, null=True)
+    max_external_responses = models.PositiveIntegerField(null=True, blank=True)
+    external_response_count = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)  # New field to track survey activation status
+    expiry_datetime = models.DateTimeField(null=True, blank=True)
+    is_expired = models.BooleanField(default=False)
     
     def save(self, *args, **kwargs):
+        # Check if expiry datetime is set and has passed
+        if self.expiry_datetime and timezone.now() > self.expiry_datetime:
+            self.is_expired = True
+        
+        # Generate links if not present
         if not self.unique_link:
             self.unique_link = get_random_string(length=16)
+        if not self.external_link:
+            self.external_link = get_random_string(length=16)
+        
         super().save(*args, **kwargs)
+    
+    def check_expiry(self):
+        """
+        Manually check and update expiry status.
+        Can be called periodically or before critical operations.
+        """
+        if self.expiry_datetime and timezone.now() > self.expiry_datetime:
+            self.is_expired = True
+            self.save(update_fields=['is_expired'])
+        return self.is_expired
     
     def __str__(self):
         return self.title
