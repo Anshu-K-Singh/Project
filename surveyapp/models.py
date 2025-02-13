@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 #
 # Model for storing user sign-up trend
@@ -73,3 +74,34 @@ class Surveymonitor(models.Model):
 
     def __str__(self):
         return f"{self.code} - {self.name or 'Unnamed Survey'}"
+
+class Poll(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    question = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    respondents = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='polls', blank=True)
+
+    def __str__(self):
+        return self.question
+
+class PollChoice(models.Model):
+    poll = models.ForeignKey(Poll, related_name='choices', on_delete=models.CASCADE)
+    choice_text = models.CharField(max_length=200)
+    votes = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.choice_text
+
+class PollResponse(models.Model):
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name='responses')
+    respondent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    choice = models.ForeignKey(PollChoice, on_delete=models.CASCADE)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['poll', 'respondent']
+
+    def __str__(self):
+        return f"{self.respondent} - {self.poll}"

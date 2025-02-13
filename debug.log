@@ -1,0 +1,22 @@
+INFO 2025-02-11 15:41:33,889 autoreload 5104 16540 Watching for file changes with StatReloader
+INFO 2025-02-11 15:41:33,889 autoreload 5104 16540 Watching for file changes with StatReloader
+DEBUG 2025-02-11 15:41:34,296 __init__ 5104 16540 matplotlib data path: C:\Users\hp\Desktop\survey\.venv\Lib\site-packages\matplotlib\mpl-data
+DEBUG 2025-02-11 15:41:34,314 __init__ 5104 16540 CONFIGDIR=C:\Users\hp\.matplotlib
+DEBUG 2025-02-11 15:41:34,324 __init__ 5104 16540 interactive is False
+DEBUG 2025-02-11 15:41:34,325 __init__ 5104 16540 platform is win32
+DEBUG 2025-02-11 15:41:34,464 __init__ 5104 16540 CACHEDIR=C:\Users\hp\.matplotlib
+DEBUG 2025-02-11 15:41:34,476 font_manager 5104 16540 Using fontManager instance from C:\Users\hp\.matplotlib\fontlist-v390.json
+INFO 2025-02-11 15:41:37,953 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:37,953 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,420 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,420 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,622 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,622 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,807 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:39,807 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:40,095 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:40,095 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:40,194 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:41:40,194 basehttp 5104 18632 "GET /dashboard/ HTTP/1.1" 200 17688
+INFO 2025-02-11 15:42:21,821 autoreload 5104 16540 C:\Users\hp\Desktop\survey\scimitar\survey\settings.py changed, reloading.
+INFO 2025-02-11 15:42:21,821 autoreload 5104 16540 C:\Users\hp\Desktop\survey\scimitar\survey\settings.py changed, reloading.

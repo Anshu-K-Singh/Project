@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'account_app',
     "surveys",
     "respondent_app",
+    'django_htmx',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
+
 ]
 
 

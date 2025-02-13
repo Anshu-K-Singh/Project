@@ -443,3 +443,158 @@ def remove_respondent_from_group(request, group_id, respondent_id):
             'status': 'error', 
             'message': str(e)
         }, status=400)
+
+
+
+from .visualizations import (
+    generate_demographic_pie_chart, 
+    generate_education_bar_chart, 
+    generate_age_distribution
+)
+from respondent_app.models import Respondent
+
+def dashboard(request):
+    user = request.user
+    surveys = Survey.objects.filter(user=user)
+    total_surveys = surveys.count()
+    total_responses = Response.objects.count()
+    
+    # Respondent Visualizations
+    respondents = Respondent.objects.all()
+    
+    context = {
+        'user': user,
+        'surveys': surveys,
+        'total_surveys': total_surveys,
+        'total_responses': total_responses,
+        'gender_chart': generate_demographic_pie_chart(respondents),
+        'education_chart': generate_education_bar_chart(respondents),
+        'age_distribution': generate_age_distribution(respondents)
+    }
+    return render(request, 'surveyapp/dashboard.html', context)
+
+
+def load_respondent_chart(request):
+    chart_type = request.GET.get('chart', 'gender')
+    respondents = Respondent.objects.all()
+    
+    if chart_type == 'gender':
+        chart = generate_demographic_pie_chart(respondents)
+    elif chart_type == 'education':
+        chart = generate_education_bar_chart(respondents)
+    elif chart_type == 'age':
+        chart = generate_age_distribution(respondents)
+   
+    return HttpResponse(chart)
+
+
+from django.http import JsonResponse
+
+
+
+import pandas as pd
+from django.db.models import Count
+
+def debug_chart_data(request):
+    respondents = Respondent.objects.all()
+    gender_counts = respondents.values('gender').annotate(count=Count('id'))  
+    df = pd.DataFrame(list(gender_counts))
+    df['gender'] = df['gender'].fillna("Unknown")
+    df['count'] = df['count'].astype(int)
+
+    return JsonResponse(df.to_dict(orient='records'), safe=False)
+
+from .models import Poll, PollChoice, PollResponse
+
+@login_required
+def create_poll(request):
+    if request.method == 'POST':
+        question = request.POST.get('question')
+        choices = request.POST.getlist('choices[]')
+        expires_at = request.POST.get('expires_at')
+        
+        if question and choices:
+            poll = Poll.objects.create(
+                user=request.user,
+                question=question,
+                expires_at=expires_at if expires_at else None
+            )
+            
+            # Create choices
+            for choice_text in choices:
+                if choice_text.strip():  # Only create non-empty choices
+                    PollChoice.objects.create(
+                        poll=poll,
+                        choice_text=choice_text.strip()
+                    )
+            
+            messages.success(request, 'Poll created successfully!')
+            return redirect('poll_detail', poll_id=poll.id)
+    
+    return render(request, 'surveyapp/create_poll.html')
+
+@login_required
+def poll_detail(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    total_votes = sum(choice.votes for choice in poll.choices.all())
+    
+    context = {
+        'poll': poll,
+        'total_votes': total_votes,
+    }
+    return render(request, 'surveyapp/poll_detail.html', context)
+
+@login_required
+def poll_list(request):
+    polls = Poll.objects.filter(user=request.user).order_by('-created_at')
+    context = {
+        'polls': polls
+    }
+    return render(request, 'surveyapp/poll_list.html', context)
+
+@login_required
+def vote_poll(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    
+    if request.method == 'POST':
+        choice_id = request.POST.get('choice')
+        if choice_id:
+            choice = get_object_or_404(PollChoice, id=choice_id)
+            
+            # Check if user has already voted
+            if not PollResponse.objects.filter(poll=poll, respondent=request.user).exists():
+                PollResponse.objects.create(
+                    poll=poll,
+                    respondent=request.user,
+                    choice=choice
+                )
+                choice.votes += 1
+                choice.save()
+                messages.success(request, 'Your vote has been recorded!')
+            else:
+                messages.error(request, 'You have already voted on this poll!')
+                
+        return redirect('poll_detail', poll_id=poll.id)
+    
+    context = {
+        'poll': poll
+    }
+    return render(request, 'surveyapp/vote_poll.html', context)
+
+@login_required
+def share_poll(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id)
+    
+    # Get all respondents and share the poll with them
+    all_respondents = User.objects.all().exclude(id=request.user.id)  # Exclude the poll creator
+    poll.respondents.add(*all_respondents)
+    
+    messages.success(request, 'Poll shared with all respondents successfully!')
+    return redirect('poll_detail', poll_id=poll.id)
+
+@login_required
+def delete_poll(request, poll_id):
+    poll = get_object_or_404(Poll, id=poll_id, user=request.user)
+    poll.delete()
+    messages.success(request, 'Poll deleted successfully.')
+    return redirect('poll_list')

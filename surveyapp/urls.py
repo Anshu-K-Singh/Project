@@ -19,6 +19,17 @@ urlpatterns = [
     path('profiling/group/<int:group_id>/', views.group_details, name='group_details'),
     path('profiling/group/<int:group_id>/remove-respondent/<int:respondent_id>/', 
          views.remove_respondent_from_group, name='remove_respondent_from_group'),
+    path('dashboard/chart/', views.load_respondent_chart, name='load_chart'),
+    path("debug-chart-data/", views.debug_chart_data, name="debug-chart-data"),
+
+    # Poll URLs
+    path('polls/', views.poll_list, name='poll_list'),
+    path('polls/create/', views.create_poll, name='create_poll'),
+    path('polls/<int:poll_id>/', views.poll_detail, name='poll_detail'),
+    path('polls/<int:poll_id>/vote/', views.vote_poll, name='vote_poll'),
+    path('polls/<int:poll_id>/share/', views.share_poll, name='share_poll'),
+    path('polls/<int:poll_id>/delete/', views.delete_poll, name='delete_poll'),
+
 ]
 #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # handler404 = 'your_app_name.views.custom_404_view'

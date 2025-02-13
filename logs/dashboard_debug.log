@@ -1,0 +1,24 @@
+[INFO] 2025-02-11 15:42:23,858 autoreload 18196 6616 - Watching for file changes with StatReloader
+[INFO] 2025-02-11 15:42:23,858 autoreload 18196 6616 - Watching for file changes with StatReloader
+[DEBUG] 2025-02-11 15:42:24,231 __init__ 18196 6616 - matplotlib data path: C:\Users\hp\Desktop\survey\.venv\Lib\site-packages\matplotlib\mpl-data
+[DEBUG] 2025-02-11 15:42:24,264 __init__ 18196 6616 - CONFIGDIR=C:\Users\hp\.matplotlib
+[DEBUG] 2025-02-11 15:42:24,270 __init__ 18196 6616 - interactive is False
+[DEBUG] 2025-02-11 15:42:24,270 __init__ 18196 6616 - platform is win32
+[DEBUG] 2025-02-11 15:42:24,516 __init__ 18196 6616 - CACHEDIR=C:\Users\hp\.matplotlib
+[DEBUG] 2025-02-11 15:42:24,521 font_manager 18196 6616 - Using fontManager instance from C:\Users\hp\.matplotlib\fontlist-v390.json
+[INFO] 2025-02-11 15:43:07,041 autoreload 18196 6616 - C:\Users\hp\Desktop\survey\scimitar\surveys\views.py changed, reloading.
+[INFO] 2025-02-11 15:43:07,041 autoreload 18196 6616 - C:\Users\hp\Desktop\survey\scimitar\surveys\views.py changed, reloading.
+[INFO] 2025-02-11 15:43:08,709 autoreload 19512 19580 - Watching for file changes with StatReloader
+[INFO] 2025-02-11 15:43:08,709 autoreload 19512 19580 - Watching for file changes with StatReloader
+[DEBUG] 2025-02-11 15:43:09,085 __init__ 19512 19580 - matplotlib data path: C:\Users\hp\Desktop\survey\.venv\Lib\site-packages\matplotlib\mpl-data
+[DEBUG] 2025-02-11 15:43:09,107 __init__ 19512 19580 - CONFIGDIR=C:\Users\hp\.matplotlib
+[DEBUG] 2025-02-11 15:43:09,111 __init__ 19512 19580 - interactive is False
+[DEBUG] 2025-02-11 15:43:09,111 __init__ 19512 19580 - platform is win32
+[DEBUG] 2025-02-11 15:43:09,234 __init__ 19512 19580 - CACHEDIR=C:\Users\hp\.matplotlib
+[DEBUG] 2025-02-11 15:43:09,238 font_manager 19512 19580 - Using fontManager instance from C:\Users\hp\.matplotlib\fontlist-v390.json
+[INFO] 2025-02-11 15:43:12,935 basehttp 19512 8300 - "GET /dashboard/ HTTP/1.1" 200 17688
+[INFO] 2025-02-11 15:43:12,935 basehttp 19512 8300 - "GET /dashboard/ HTTP/1.1" 200 17688
+[INFO] 2025-02-11 15:43:13,606 basehttp 19512 8300 - "GET /dashboard/ HTTP/1.1" 200 17688
+[INFO] 2025-02-11 15:43:13,606 basehttp 19512 8300 - "GET /dashboard/ HTTP/1.1" 200 17688
+[INFO] 2025-02-11 15:43:29,290 autoreload 19512 19580 - C:\Users\hp\Desktop\survey\scimitar\survey\settings.py changed, reloading.
+[INFO] 2025-02-11 15:43:29,290 autoreload 19512 19580 - C:\Users\hp\Desktop\survey\scimitar\survey\settings.py changed, reloading.
