@@ -19,8 +19,8 @@ urlpatterns = [
     path('profiling/group/<int:group_id>/', views.group_details, name='group_details'),
     path('profiling/group/<int:group_id>/remove-respondent/<int:respondent_id>/', 
          views.remove_respondent_from_group, name='remove_respondent_from_group'),
-    path('dashboard/chart/', views.load_respondent_chart, name='load_chart'),
-    path("debug-chart-data/", views.debug_chart_data, name="debug-chart-data"),
+    # path('dashboard/chart/', views.load_respondent_chart, name='load_chart'),
+    # path("debug-chart-data/", views.debug_chart_data, name="debug-chart-data"),
 
     # Poll URLs
     path('polls/', views.poll_list, name='poll_list'),

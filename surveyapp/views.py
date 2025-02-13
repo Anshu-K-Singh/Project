@@ -446,63 +446,28 @@ def remove_respondent_from_group(request, group_id, respondent_id):
 
 
 
+
+
+from respondent_app.models import Respondent
 from .visualizations import (
-    generate_demographic_pie_chart, 
-    generate_education_bar_chart, 
+    generate_demographic_pie_chart,
+    generate_education_bar_chart,
     generate_age_distribution
 )
-from respondent_app.models import Respondent
 
 def dashboard(request):
-    user = request.user
-    surveys = Survey.objects.filter(user=user)
-    total_surveys = surveys.count()
-    total_responses = Response.objects.count()
-    
-    # Respondent Visualizations
     respondents = Respondent.objects.all()
-    
+
     context = {
-        'user': user,
-        'surveys': surveys,
-        'total_surveys': total_surveys,
-        'total_responses': total_responses,
+        'total_respondents': respondents.count(),
         'gender_chart': generate_demographic_pie_chart(respondents),
         'education_chart': generate_education_bar_chart(respondents),
-        'age_distribution': generate_age_distribution(respondents)
+        'age_chart': generate_age_distribution(respondents)
     }
     return render(request, 'surveyapp/dashboard.html', context)
 
 
-def load_respondent_chart(request):
-    chart_type = request.GET.get('chart', 'gender')
-    respondents = Respondent.objects.all()
-    
-    if chart_type == 'gender':
-        chart = generate_demographic_pie_chart(respondents)
-    elif chart_type == 'education':
-        chart = generate_education_bar_chart(respondents)
-    elif chart_type == 'age':
-        chart = generate_age_distribution(respondents)
    
-    return HttpResponse(chart)
-
-
-from django.http import JsonResponse
-
-
-
-import pandas as pd
-from django.db.models import Count
-
-def debug_chart_data(request):
-    respondents = Respondent.objects.all()
-    gender_counts = respondents.values('gender').annotate(count=Count('id'))  
-    df = pd.DataFrame(list(gender_counts))
-    df['gender'] = df['gender'].fillna("Unknown")
-    df['count'] = df['count'].astype(int)
-
-    return JsonResponse(df.to_dict(orient='records'), safe=False)
 
 from .models import Poll, PollChoice, PollResponse
 
