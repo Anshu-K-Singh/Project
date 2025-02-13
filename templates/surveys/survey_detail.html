@@ -21,23 +21,31 @@
         {% endif %}
         <p class="text-gray-600 mb-6">{{ survey.description }}</p>
         
-        <div class="mb-4">
-            <strong>Internal Survey Link (For Registered Users):</strong>
-            <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}/survey/take/{{ survey.unique_link }}" 
-                class="w-full rounded-md border-gray-300 bg-gray-100 p-2">
-        </div>
+        
 
         <div class="mb-6 bg-blue-50 p-4 rounded-lg">
             <h3 class="text-lg font-semibold mb-3">External Response Collection</h3>
             
-            <div class="mb-4">
-                <strong>External Survey Link:</strong>
-                <input type="text" readonly value="{{ request.scheme }}://{{ request.get_host }}/survey/take/{{ survey.external_link }}" 
-                    class="w-full rounded-md border-gray-300 bg-gray-100 p-2 mb-2">
-                <button onclick="copyToClipboard(this.previousElementSibling)" 
-                    class="text-sm bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded">
-                    Copy Link
+            <div class="mb-4 flex space-x-2 items-center">
+                <strong class="mr-2">External Survey Link:</strong>
+                <input type="text" id="external-survey-link" readonly 
+                    value="{{ request.scheme }}://{{ request.get_host }}/survey/take/{{ survey.external_link }}" 
+                    class="flex-grow rounded-md border-gray-300 bg-gray-100 p-1 text-sm">
+                <button onclick="copyToClipboard('external-survey-link')" 
+                    class="text-xs bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Copy
                 </button>
+                <a href="{% url 'survey_qr_code' survey.id %}" 
+                    download="survey_qr_code_{{ survey.id }}.png"
+                    class="text-xs bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    QR
+                </a>
             </div>
 
             <div class="mb-4">
@@ -159,18 +167,17 @@
     </div>
 
     <script>
-    function copyToClipboard(inputElement) {
-        inputElement.select();
-        document.execCommand('copy');
-        window.getSelection().removeAllRanges();
-        
-        // Show temporary success message
-        const button = inputElement.nextElementSibling;
-        const originalText = button.textContent;
-        button.textContent = 'Copied!';
-        setTimeout(() => {
-            button.textContent = originalText;
-        }, 2000);
+    function copyToClipboard(elementId) {
+        const copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // For mobile devices
+
+        // Copy the text
+        navigator.clipboard.writeText(copyText.value).then(function() {
+            alert('Link copied to clipboard!');
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+        });
     }
     </script>
 </body>

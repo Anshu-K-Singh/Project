@@ -30,6 +30,8 @@ urlpatterns = [
     path('polls/<int:poll_id>/share/', views.share_poll, name='share_poll'),
     path('polls/<int:poll_id>/delete/', views.delete_poll, name='delete_poll'),
 
+    # QR Code Generation URL
+    path('survey/<int:survey_id>/qr-code/', views.generate_survey_qr_code, name='survey_qr_code'),
 ]
 #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # handler404 = 'your_app_name.views.custom_404_view'

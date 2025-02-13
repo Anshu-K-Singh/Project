@@ -1,0 +1,25 @@
+<div class="bg-white rounded-lg shadow-md p-6 overflow-auto">
+    <h3 class="text-lg font-semibold text-gray-700">Respondents Data</h3>
+    <table class="min-w-full bg-white border border-gray-200">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="px-4 py-2 border">Username</th>
+                <th class="px-4 py-2 border">Gender</th>
+                <th class="px-4 py-2 border">Education</th>
+                <th class="px-4 py-2 border">Age</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for respondent in respondents %}
+            <tr>
+                <td class="px-4 py-2 border">{{ respondent.user.username }}</td>
+                <td class="px-4 py-2 border">{{ respondent.gender }}</td>
+                <td class="px-4 py-2 border">{{ respondent.education }}</td>
+                <td class="px-4 py-2 border">
+                    {% if respondent.dob %}{{ respondent.dob|date:"Y" }}{% else %}N/A{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

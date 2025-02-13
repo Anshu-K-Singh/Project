@@ -563,3 +563,39 @@ def delete_poll(request, poll_id):
     poll.delete()
     messages.success(request, 'Poll deleted successfully.')
     return redirect('poll_list')
+
+import qrcode
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from surveys.models import Survey
+from io import BytesIO
+
+def generate_survey_qr_code(request, survey_id):
+    """
+    Generate a QR code for the survey's external link
+    """
+    survey = get_object_or_404(Survey, id=survey_id)
+    
+    # Construct the full external survey link
+    survey_link = f"{request.scheme}://{request.get_host()}/survey/take/{survey.external_link}"
+    
+    # Create QR code instance
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(survey_link)
+    qr.make(fit=True)
+
+    # Create an image from the QR Code
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Save the image to a bytes buffer
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    # Return the image as an HTTP response
+    return HttpResponse(buffer.getvalue(), content_type="image/png")

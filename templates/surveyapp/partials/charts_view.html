@@ -1,0 +1,28 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Gender Distribution</h3>
+        {% if gender_chart %}
+            <div>{{ gender_chart|safe }}</div>
+        {% else %}
+            <p class="text-gray-500">No data available</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Education Levels</h3>
+        {% if education_chart %}
+            <div>{{ education_chart|safe }}</div>
+        {% else %}
+            <p class="text-gray-500">No data available</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-700">Age Distribution</h3>
+        {% if age_chart %}
+            <div>{{ age_chart|safe }}</div>
+        {% else %}
+            <p class="text-gray-500">No data available</p>
+        {% endif %}
+    </div>
+</div>
