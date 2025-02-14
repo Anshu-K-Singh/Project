@@ -52,6 +52,24 @@ class Affiliate(models.Model):
 
 
 
+class SupportQuery(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    query = models.TextField()
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Support Query from {self.name} at {self.created_at}"
+
+    class Meta:
+        verbose_name_plural = "Support Queries"
+        ordering = ['-created_at']
+
+
+
+
 
 
 #MODELS FOR SURVEY MONITOR

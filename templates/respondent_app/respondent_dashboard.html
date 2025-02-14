@@ -1,84 +1,496 @@
 {% extends 'respondent_app/base.html' %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Respondent Dashboard</h1>
-
-    {% if unread_notifications %}
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h2 class="text-xl font-semibold mb-4">New Surveys Available</h2>
-        <div class="space-y-4">
-            {% for notification in unread_notifications %}
-            <div class="bg-blue-100 border-l-4 border-blue-500 p-4 relative">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-lg">{{ notification.survey.title }}</h3>
-                        <p class="text-gray-600">
-                            Created by {{ notification.survey.user.username }} 
-                            on {{ notification.survey.created_at|date:"F d, Y" }}
-                        </p>
-                    </div>
-                    <div>
-                        <a href="{% url 'surveys:take_survey' unique_link=notification.survey.unique_link %}" 
-                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Take Survey
-                        </a>
-                    </div>
+    <!-- Message Popup Modal -->
+    {% if messages %}
+    <div id="messageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+            {% for message in messages %}
+            <div class="text-center">
+                <div class="mb-4">
+                    <i class="fas {% if message.tags == 'warning' %}fa-exclamation-triangle text-yellow-500{% else %}fa-info-circle text-blue-500{% endif %} text-4xl"></i>
                 </div>
+                <h2 class="text-xl font-bold mb-4">Notification</h2>
+                <p class="mb-6">{{ message }}</p>
+                <button id="closeModal" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-300">
+                    Close
+                </button>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
 
+    <script>
+        // Message Modal Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageModal = document.getElementById('messageModal');
+            const closeModalBtn = document.getElementById('closeModal');
 
- {% if shared_polls %}
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h2 class="text-xl font-semibold mb-4">Shared Polls</h2>
-        <div class="space-y-4">
-            {% for poll in shared_polls %}
-            <div class="bg-blue-100 border-l-4 border-blue-500 p-4 relative">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-lg">{{ poll.title }}</h3>
-                        <p class="text-gray-600">
-                            Created by {{ poll.user.username }} 
-                            on {{ poll.created_at|date:"F d, Y" }}
-                        </p>
+            {% if messages %}
+            messageModal.classList.remove('hidden');
+            {% endif %}
+
+            closeModalBtn.addEventListener('click', function() {
+                messageModal.classList.add('hidden');
+            });
+        });
+    </script>
+
+    <div class="flex-1 overflow-y-auto" style="max-height: 100vh;">
+<head>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Global background and animation */
+        body {
+            background: linear-gradient(135deg, #800080, #000000);
+            background-size: 200% 200%;
+            animation: gradientAnimation 10s ease infinite;
+        }
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* Top Navigation Bar styling */
+        nav.top-nav {
+            backdrop-filter: blur(15px);
+            background: transparent;
+            padding: 12px 0;
+        }
+        nav.top-nav .nav-link {
+            color: #ffffff;
+            transition: color 0.3s ease;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        nav.top-nav .nav-link:hover {
+            color: #ff5733;
+        }
+        nav.top-nav .nav-icon {
+            margin-right: 8px;
+        }
+        /* Fade-in animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Card styling */
+        .card {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 500px;
+            overflow: hidden;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        .card-content {
+            font-size: 1rem;
+            color: #333;
+        }
+        .welcome-message {
+            color: white;
+            animation: slideInOut 5s forwards;
+        }
+        @keyframes slideInOut {
+            0% { transform: translateX(-100%); opacity: 0; }
+            40% { transform: translateX(0); opacity: 1; }
+            60% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        .blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+        .blur-overlay.active {
+            opacity: 1;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+        .dashboard-title {
+            font-family: 'Roboto', sans-serif;
+            font-size: 2.0rem;
+            animation: fadeIn 1s ease-in;
+            display: flex;
+            align-items: center;
+        }
+        .slide-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .arrow-container {
+            cursor: pointer;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.7;
+            animation: bounce 3s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-15px); }
+            60% { transform: translateX(-50%) translateY(-7px); }
+        }
+        .down-arrow {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 5px;
+        }
+        .info {
+            padding: 10px;
+            display: none;
+        }
+        .fade-out {
+            animation: fade 3s forwards;
+        }
+        @keyframes fade {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes pop-up {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pop-right {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes pop-bottom {
+            0% { transform: translateY(100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .card-up {
+            animation: pop-up 2s ease forwards;
+        }
+        .card-right {
+            animation: pop-right 2s ease forwards;
+        }
+        .card-bottom {
+            animation: pop-bottom 2s ease forwards;
+        }
+        /* Sidebar styles */
+        .sidebar {
+            background: transparent;
+            width: 68px;
+            transition: width 0.3s ease;
+            backdrop-filter: blur(15px);
+        }
+        .sidebar:hover {
+            width: 250px;
+            /* additional styles for hover effect */
+        }
+        .nav-text {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+        .sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .submenu.active {
+            max-height: 500px;
+        }
+        /* Scrollbar styling for sidebar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="fade-in">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Drawer -->
+        <aside class="sidebar bg-gradient-to-b from-gray-800 to-gray-900 text-white min-h-screen flex flex-col shadow-xl transition-all duration-300 ease-in-out overflow-hidden">
+            <!-- Logo Section -->
+            <div class="p-4 bg-opacity-50 flex justify-center items-center text-center w-full">
+                <i class="fa fa-user fa-lg menu-icon w-8 text-white mx-auto"></i>
+            </div>
+            <!-- Navigation Menu -->
+            <nav class="flex-grow overflow-y-auto">
+                <ul class="py-4">
+                    <!-- Dashboard -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-tachometer-alt fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Dashboard</span>
+                        </div>
+                    </li>
+                    <!-- Survey Wall -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-th-large fa-lg menu-icon w-6"></i>
+                            <a href="{% url 'respondent_app:survey_wall' %}" class="nav-link">
+                                <span class="nav-text ml-3">Survey Wall</span>
+                            </a>
+                        </div>
+                    </li>
+                    <!-- Survey History -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-history fa-lg menu-icon w-6"></i>
+                            <a href="{% url 'respondent_app:survey_history' %}" class="nav-link">
+                                <span class="nav-text ml-3">Survey History</span>
+                            </a>
+                        </div>
+                    </li>
+                    <!-- Transaction History -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-credit-card fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Transaction History</span>
+                        </div>
+                    </li>
+                    <!-- Rewards -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-gift fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Rewards</span>
+                        </div>
+                    </li>
+                    <!-- Invite Friends -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-user-plus fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Invite Friends</span>
+                        </div>
+                    </li>
+                    <!-- Help Desk -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-life-ring fa-lg menu-icon w-6"></i>
+                            <span class="nav-text ml-3">Help Desk</span>
+                        </div>
+                    </li>
+                    <!-- Daily Poll -->
+                    <li class="mb-1">
+                        <div class="menu-item flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-200 rounded-lg mx-2">
+                            <i class="fa fa-poll fa-lg menu-icon w-6"></i>
+                
+                            <span class="nav-text ml-3">Daily Poll</span>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-hidden">
+            <!-- Top Navigation Bar -->
+            <nav class="top-nav shadow-md">
+                <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                    <div class="text-xl font-semibold text-white dashboard-title">
+                        Dashboard
                     </div>
-                    <div>
-                        <a href="{% url 'respondent_app:take_poll' poll.id %}" 
-                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Take poll
+                    <div class="flex items-center space-x-4">
+                        <a href="{% url 'logout' %}" class="nav-link">
+                            <i class="fas fa-sign-out-alt nav-icon"></i>
+                            <span>Logout</span>
                         </a>
                     </div>
                 </div>
+            </nav>
+
+            <!-- Dashboard Main Content -->
+            <div class="h-screen overflow-y-auto">
+                <main class="max-w-7xl mx-auto p-4">
+                    <div class="container mx-auto px-4 py-8">
+                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl shadow-2xl p-6 transform transition-all duration-500 hover:scale-105 hover:shadow-3xl mb-6">
+                            <div class="flex items-center space-x-6">
+                                <div class="flex-shrink-0">
+                                    <img class="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg transform transition-transform duration-500 hover:rotate-6" 
+                                         src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" 
+                                         alt="Default User Avatar"
+                                    >
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h2 class="text-3xl font-bold mb-2 animate-fade-in">
+                                        {{ user.get_full_name|default:user.username }}
+                                    </h2>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center text-sm animate-slide-right">
+                                            <svg class="h-5 w-5 mr-2 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                            </svg>
+                                            <span class="truncate">{{ user.email }}</span>
+                                        </div>
+                                        <div class="flex items-center text-sm animate-slide-right delay-200">
+                                            <svg class="h-5 w-5 mr-2 text-green-300" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span>Joined {{ user.date_joined|date:"F Y" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end items-center w-full pr-8">
+                                <div class="grid grid-cols-3 gap-4 text-center w-3/4">
+                                    <div class="bg-white bg-opacity-20 rounded-lg p-4 transform transition-all duration-300 hover:scale-110 hover:bg-opacity-30 flex flex-col items-center justify-center">
+                                        <h3 class="text-xl font-bold">{{ survey_notification_count}}</h3>
+                                        <p class="text-sm">Total Surveys</p>
+                                    </div>
+                                    <div class="bg-white bg-opacity-20 rounded-lg p-4 transform transition-all duration-300 hover:scale-110 hover:bg-opacity-30 flex flex-col items-center justify-center">
+                                        <h3 class="text-xl font-bold">{{ user.survey_responses.count }}</h3>
+                                        <p class="text-sm">Surveys Completed</p>
+                                    </div>
+                                    <!-- <div class="bg-white bg-opacity-20 rounded-lg p-4 transform transition-all duration-300 hover:scale-110 hover:bg-opacity-30">
+                                        <h3 class="text-xl font-bold">{{ user.respondent_groups.count }}</h3>
+                                        <p class="text-sm">Respondent Groups</p>
+                                    </div> -->
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-between items-center">
+                                <div class="flex items-center text-sm text-white text-opacity-70">
+                                    <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                    Last Login: {{ user.last_login|default:"Never" }}
+                                </div>
+                                <a href="{% url 'respondent_app:edit_profile' %}" 
+                                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-300 transform hover:scale-105">
+                                    Edit Profile
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="welcome-message" style="color: white;">
+                            <h1 class="text-2xl font-bold">
+                                <span style="text-transform: uppercase;">Welcome</span>, {{ user.username }}!
+                            </h1>
+                        </div>
+
+                        {% if unread_notifications %}
+                        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                            <h2 class="text-xl font-semibold mb-4">New Surveys Available</h2>
+                            <div class="space-y-4">
+                                {% for notification in unread_notifications %}
+                                <div class="bg-blue-100 border-l-4 border-blue-500 p-4 relative">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <h3 class="font-bold text-lg">{{ notification.survey.title }}</h3>
+                                            <p class="text-gray-600">
+                                                Created by {{ notification.survey.user.username }} 
+                                                on {{ notification.survey.created_at|date:"F d, Y" }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'surveys:take_survey' unique_link=notification.survey.unique_link %}" 
+                                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                                Take Survey
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if shared_polls %}
+                        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                            <h2 class="text-xl font-semibold mb-4">Shared Polls</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {% for poll in shared_polls %}
+                                <div class="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg p-4 shadow-md transform transition-all duration-300 hover:scale-105">
+                                    <div class="flex flex-col h-full">
+                                        <div class="flex-grow">
+                                            <h3 class="font-bold text-lg text-purple-800 mb-2">{{ poll.title }}</h3>
+                                            <p class="text-gray-600 mb-4">
+                                                Shared by: {{ poll.creator.username }}<br>
+                                                Shared on: {{ poll.shared_date|date:"F d, Y" }}
+                                            </p>
+                                            {% if poll.description %}
+                                            <p class="text-gray-700 mb-3">{{ poll.description|truncatewords:20 }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex justify-between items-center mt-4">
+                                            <span class="text-sm text-gray-500">
+                                                {% if poll.deadline %}
+                                                Deadline: {{ poll.deadline|date:"F d, Y" }}
+                                                {% endif %}
+                                            </span>
+                                            <a href="{% url 'respondent_app:take_poll' poll_id=poll.id %}" 
+                                               class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300">
+                                                Take Poll
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </main>
             </div>
-            {% endfor %}
         </div>
     </div>
-    {% endif %}
 
+    <script>
+        // Card hover overlay functionality
+        const cards = document.querySelectorAll('.card');
+        const overlay = document.querySelector('.blur-overlay');
 
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                if (overlay) overlay.classList.add('active');
+            });
+            card.addEventListener('mouseleave', () => {
+                if (overlay) overlay.classList.remove('active');
+            });
+        });
 
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8">
-        <h2 class="text-xl font-semibold mb-4">Your Profile</h2>
-        <!-- Add profile details here -->
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <strong>Name:</strong> {{ user.get_full_name|default:user.username }}
-                <br>
-                <strong>Email:</strong> {{ user.email }}
-            </div>
-            <!-- Add more profile details as needed -->
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12 d-flex justify-content-end mb-3">
-            <a href="{% url 'logout' %}" class="btn btn-danger">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </div>
-</div>
+        // Toggle additional info on card images
+        function toggleInfo(element) {
+            const img = element.parentElement.querySelector('.slide-image');
+            const info = element.parentElement.querySelector('.info');
+            if (info.style.display === 'none' || info.style.display === '') {
+                img.style.transform = 'translateY(-100%)';
+                info.style.display = 'block';
+            } else {
+                img.style.transform = 'translateY(0)';
+                info.style.display = 'none';
+            }
+        }
+    </script>
+</body>
 {% endblock %}

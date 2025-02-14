@@ -32,6 +32,10 @@ urlpatterns = [
 
     # QR Code Generation URL
     path('survey/<int:survey_id>/qr-code/', views.generate_survey_qr_code, name='survey_qr_code'),
+    path('news/', views.news_page, name='news'),
+    path('support/', views.support_page, name='support'),
+    path('submit-support-query/', views.submit_support_query, name='submit_support_query'),
+    path('chatbot/', views.chatbot_response, name='chatbot_response'),
 ]
 #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # handler404 = 'your_app_name.views.custom_404_view'

@@ -151,7 +151,7 @@ class TakeSurveyView(View):
             existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
             if existing_response:
                 messages.warning(request, "You have already responded to this survey.")
-                return redirect('surveys:home')
+                return redirect('respondent_app:dashboard')
         
         return render(request, 'surveys/take_survey.html', {'survey': survey})
 
@@ -177,7 +177,7 @@ class TakeSurveyView(View):
             existing_response = Response.objects.filter(survey=survey, user=request.user).exists()
             if existing_response:
                 messages.warning(request, "You have already responded to this survey.")
-                return redirect('surveys:home')
+                return redirect('respondent_app:dashboard')
         
         # Validate all questions are answered
         for question in survey.questions.all():

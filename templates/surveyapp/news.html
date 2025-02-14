@@ -1,0 +1,239 @@
+{% extends 'surveyapp/home.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div class="flex-1 overflow-y-auto">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Advanced Header with Gradient and Animation -->
+            <div class="text-center mb-12 relative overflow-hidden">
+                <div class="absolute -top-20 -left-20 w-96 h-96 bg-purple-600 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+                <div class="absolute -bottom-20 -right-20 w-96 h-96 bg-blue-600 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+                
+                <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-600 mb-4 relative z-10 transform hover:scale-105 transition duration-500">
+                    Market Insights & Business News
+                </h1>
+                <p class="text-xl text-gray-300 max-w-2xl mx-auto mb-6 relative z-10">
+                    Curated news across market research, healthcare, real estate, finance, and business
+                </p>
+            </div>
+
+            <!-- Advanced Search and Filter Section -->
+            <div class="mb-12">
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="relative flex-grow">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search news..." 
+                            class="w-full pl-10 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-xl shadow-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-300"
+                        >
+                        <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    
+                    <div class="relative flex-grow">
+                        <select 
+                            id="categoryFilter" 
+                            class="w-full pl-10 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-xl shadow-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-300"
+                        >
+                            <option value="" class="bg-gray-800">All Categories</option>
+                            <option value="market research" class="bg-gray-800">Market Research</option>
+                            <option value="healthcare" class="bg-gray-800">Healthcare</option>
+                            <option value="real estate" class="bg-gray-800">Real Estate</option>
+                            <option value="finance" class="bg-gray-800">Finance</option>
+                            <option value="business" class="bg-gray-800">Business</option>
+                        </select>
+                        <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    
+                    <div>
+                        <button 
+                            id="applyFilters" 
+                            class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform hover:scale-105 transition duration-300"
+                        >
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News Cards Container -->
+            <div id="newsCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- News cards will be dynamically populated here -->
+            </div>
+
+            <!-- Pagination Placeholder -->
+            <div id="newsPagination" class="mt-12 flex justify-center space-x-2">
+                <!-- Pagination will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for News API and Filtering -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    const apiUrl = 'https://newsdata.io/api/1/news?apikey=pub_51848efa83d0d32f7f90c9e2f7d9b91425945&q=market%20research,%20healthcare,%20real%20estate,%20finance,%20business';
+    let currentPage = 1;
+    let newsData = [];
+    let filteredNewsData = [];
+
+    // Fetch News from API
+    async function fetchNews() {
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            newsData = data.results || [];
+            filteredNewsData = [...newsData];
+            renderNewsCards(filteredNewsData);
+        } catch (error) {
+            console.error('Error fetching news:', error);
+            document.getElementById('newsCardsContainer').innerHTML = `
+                <div class="col-span-full text-center">
+                    <div class="bg-red-900/50 border border-red-700 text-red-300 p-6 rounded-xl flex flex-col items-center space-y-4">
+                        <svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-xl font-semibold">Failed to load news. Please try again later.</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Render News Cards
+    function renderNewsCards(news) {
+        const container = document.getElementById('newsCardsContainer');
+        container.innerHTML = ''; // Clear previous cards
+
+        if (news.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center">
+                    <div class="bg-gray-800/50 border border-gray-700 text-gray-300 p-6 rounded-xl flex flex-col items-center space-y-4">
+                        <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 005.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-xl font-semibold">No news articles found matching your search criteria.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        news.forEach((article, index) => {
+            const card = document.createElement('div');
+            card.className = `bg-gray-800 rounded-2xl shadow-2xl overflow-hidden transform transition duration-500 hover:-translate-y-4 hover:shadow-3xl opacity-0 animate-fadeIn delay-${index * 100}`;
+            
+            card.innerHTML = `
+                <div class="relative h-56 overflow-hidden group">
+                    <img 
+                        src="${article.image_url || '/static/images/default-news.jpg'}" 
+                        alt="${article.title}" 
+                        class="w-full h-full object-cover transition duration-500 group-hover:scale-110 filter group-hover:brightness-50"
+                    >
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                </div>
+                <div class="p-6 relative">
+                    <div class="absolute -top-8 right-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        ${article.category || 'News'}
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-blue-600 transition duration-300">
+                        ${article.title}
+                    </h3>
+                    <p class="text-gray-400 mb-4 line-clamp-3">
+                        ${article.description || 'No description available'}
+                    </p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">
+                            ${article.pubDate || 'Date not available'}
+                        </span>
+                        <a 
+                            href="${article.link}" 
+                            target="_blank" 
+                            class="px-4 py-2 bg-gray-700 text-white rounded-full hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600 transition duration-300 transform hover:scale-105"
+                        >
+                            Read More
+                        </a>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+
+        // Update pagination
+        updatePagination(news.length);
+    }
+
+    // Update Pagination
+    function updatePagination(totalItems) {
+        const paginationContainer = document.getElementById('newsPagination');
+        const itemsPerPage = 9; // Match grid layout
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        paginationContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.className = `px-4 py-2 ${currentPage === i ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' : 'bg-gray-800 text-gray-400'} rounded-full hover:from-purple-700 hover:to-blue-700 transition duration-300`;
+            pageButton.addEventListener('click', () => {
+                currentPage = i;
+                const startIndex = (i - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                renderNewsCards(filteredNewsData.slice(startIndex, endIndex));
+            });
+            paginationContainer.appendChild(pageButton);
+        }
+    }
+
+    // Filter News
+    function filterNews() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+
+        filteredNewsData = newsData.filter(article => {
+            const titleMatch = article.title.toLowerCase().includes(searchTerm);
+            const descriptionMatch = article.description ? 
+                article.description.toLowerCase().includes(searchTerm) : false;
+            
+            const categoryMatch = categoryFilter ? 
+                (article.category || '').toLowerCase().includes(categoryFilter) : true;
+
+            return (titleMatch || descriptionMatch) && categoryMatch;
+        });
+
+        currentPage = 1; // Reset to first page
+        renderNewsCards(filteredNewsData.slice(0, 9)); // Show first page
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchNews();
+
+        document.getElementById('applyFilters').addEventListener('click', filterNews);
+        document.getElementById('searchInput').addEventListener('input', filterNews);
+        document.getElementById('categoryFilter').addEventListener('change', filterNews);
+    });
+
+    // Custom Tailwind CSS Animation
+    tailwind.config = {
+        theme: {
+            extend: {
+                animation: {
+                    'fadeIn': 'fadeIn 0.5s ease-out forwards',
+                },
+                keyframes: {
+                    fadeIn: {
+                        '0%': { opacity: '0', transform: 'translateY(20px)' },
+                        '100%': { opacity: '1', transform: 'translateY(0)' },
+                    }
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

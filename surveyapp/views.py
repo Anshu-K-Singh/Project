@@ -599,3 +599,147 @@ def generate_survey_qr_code(request, survey_id):
 
     # Return the image as an HTTP response
     return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+
+
+
+
+
+
+
+
+def news_page(request):
+    return render(request, 'surveyapp/news.html')
+
+@user_passes_test(is_superuser, login_url='/account/login/')
+def support_page(request):
+    form = SupportQueryForm()
+    context = {
+        'title': 'Support Center',
+        'form': form
+    }
+    response = render(request, 'surveyapp/support.html', context)
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
+
+from .forms import SupportQueryForm
+def submit_support_query(request):
+    if request.method == 'POST':
+        form = SupportQueryForm(request.POST)
+        if form.is_valid():
+            try:
+                support_query = form.save()
+                messages.success(request, 'Your support query has been submitted successfully!')
+                return redirect('support')
+            except Exception as e:
+                messages.error(request, f'An unexpected error occurred: {str(e)}')
+                return render(request, 'surveyapp/support.html', {'form': form})
+        else:
+            # If form is not valid, pass the form back to the template with errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            return render(request, 'surveyapp/support.html', {'form': form})
+    else:
+        form = SupportQueryForm()
+    
+    return render(request, 'surveyapp/support.html', {'form': form})
+
+import json
+import random
+import re
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+# Chatbot Intent Mapping
+INTENT_RESPONSES = {
+    'greeting': [
+        "Hello! Welcome to SCIM Support. How can I assist you today?",
+        "Hi there! I'm your SCIM Support Bot. What can I help you with?",
+        "Greetings! I'm here to help you with any questions or concerns."
+    ],
+    'help': [
+        "I can help you with various support queries. Are you looking for information about our services?",
+        "Sure, I'm ready to help! What specific issue are you facing?",
+        "Support is my specialty. Please tell me more about what you need."
+    ],
+    'faq': [
+        "Our FAQ section covers many common questions. Would you like me to guide you to the FAQ?",
+        "I can help you find answers in our Frequently Asked Questions. What would you like to know?",
+        "FAQs are a great resource. What specific information are you seeking?"
+    ],
+    'contact': [
+        "You can reach our support team at support@scimitar.com. Our support hours are Monday to Friday, 9 AM - 6 PM.",
+        "For direct support, email us at support@scimitar.com. We're available weekdays from 9 AM to 6 PM.",
+        "Need personalized help? Contact us at support@scimitar.com during our business hours."
+    ],
+    'thanks': [
+        "You're welcome! Is there anything else I can help you with?",
+        "Happy to help! Do you need assistance with anything else?",
+        "Always glad to support you. What else can I do for you today?"
+    ],
+    'default': [
+        "I'm processing your request. Could you please provide more details?",
+        "I'm not quite sure I understand. Could you rephrase or be more specific?",
+        "I want to help, but I need a bit more information from you."
+    ]
+}
+
+@csrf_exempt
+def chatbot_response(request):
+    """
+    Handle chatbot interactions and provide intelligent responses
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '').lower()
+
+            # Detect intent
+            intent = detect_intent(user_message)
+            
+            # Get response
+            response = random.choice(INTENT_RESPONSES.get(intent, INTENT_RESPONSES['default']))
+
+            return JsonResponse({
+                'status': 'success',
+                'message': response
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=405)
+
+def detect_intent(message):
+    """
+    Detect user intent based on message content
+    """
+    # Greeting intents
+    if re.search(r'\b(hi|hello|hey|greetings)\b', message):
+        return 'greeting'
+    
+    # Help intents
+    if re.search(r'\b(help|support|assist|problem)\b', message):
+        return 'help'
+    
+    # FAQ intents
+    if re.search(r'\b(faq|question|questions|how do i|how to)\b', message):
+        return 'faq'
+    
+    # Contact intents
+    if re.search(r'\b(contact|email|phone|reach out)\b', message):
+        return 'contact'
+    
+    # Thanks intents
+    if re.search(r'\b(thanks|thank you|appreciate)\b', message):
+        return 'thanks'
+    
+    # Default fallback
+    return 'default'
