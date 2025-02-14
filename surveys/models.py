@@ -23,6 +23,7 @@ class Survey(models.Model):
     is_active = models.BooleanField(default=True)  # New field to track survey activation status
     expiry_datetime = models.DateTimeField(null=True, blank=True)
     is_expired = models.BooleanField(default=False)
+    points = models.IntegerField(default=0)
     
     def save(self, *args, **kwargs):
         # Check if expiry datetime is set and has passed
