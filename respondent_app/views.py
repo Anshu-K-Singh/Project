@@ -90,6 +90,8 @@ def respondent_dashboard(request):
     voted_polls = Poll.objects.filter(
         responses__respondent=request.user
     )
+    completed_surveys = Response.objects.filter(user=request.user)
+    total_points = sum(response.survey.points for response in completed_surveys)
     
     context = {
         'respondent': respondent,
@@ -97,6 +99,7 @@ def respondent_dashboard(request):
         'survey_notification_count': survey_notification_count,
         'shared_polls': shared_polls,
         'voted_polls': voted_polls,
+        'total_points': total_points,
     }
     
     return render(request, 'respondent_app/respondent_dashboard.html', context)
@@ -192,6 +195,8 @@ def survey_wall(request):
         'new_survey_ids': list(new_survey_ids),
     }
     return render(request, 'respondent_app/surveywall.html', context)
+
+    
 
 
 

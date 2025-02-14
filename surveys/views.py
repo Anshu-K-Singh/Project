@@ -522,7 +522,7 @@ class SendSurveyToGroupView(LoginRequiredMixin, View):
     def post(self, request, survey_id):
         survey = get_object_or_404(Survey, id=survey_id, user=request.user)
         group_id = request.POST.get('respondent_group')
-
+        points = request.POST.get('points')
         if not group_id:
             messages.error(request, "Please select a respondent group.")
             return redirect('surveys:survey_detail', survey_id=survey_id)
@@ -580,6 +580,8 @@ class SendSurveyToGroupView(LoginRequiredMixin, View):
             else:
                 messages.info(request, "No new respondents were found for this survey in the selected group.")
 
+            survey.points = points
+            survey.save()
             return redirect('surveys:survey_detail', survey_id=survey_id)
 
         except RespondentGroup.DoesNotExist:
