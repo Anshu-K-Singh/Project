@@ -4,115 +4,120 @@
     <meta charset="UTF-8">
     <title>Survey Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .animated-bg {
+            background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB
+);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold mb-4">{{ survey.title }}</h1>
+<body class="animated-bg min-h-screen bg-gray-100 p-6">
+    <!-- Back to Dashboard Button -->
+    <div class="absolute top-4 left-4">
+        <a href="{% url 'surveys:create_survey' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+    </div>
+    <!-- Main Content Area -->
+    <div class="max-w-4xl mx-auto bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-lg shadow-lg">
+        <!-- Survey Title -->
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">{{ survey.title }}</h1>
+        <!-- Expiry Alert -->
         {% if survey.is_expired %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-3 rounded-md mb-4">
             <strong class="font-bold">Survey Expired!</strong>
-            <span class="block sm:inline">
-                This survey is no longer active 
+            <p>This survey is no longer active
                 {% if survey.expiry_datetime %}
-                    (expired on {{ survey.expiry_datetime|date:"F d, Y H:i" }})
+                (expired on {{ survey.expiry_datetime|date:"F d, Y H:i" }})
                 {% endif %}
-            </span>
+            </p>
         </div>
         {% endif %}
-        <p class="text-gray-600 mb-6">{{ survey.description }}</p>
-        
-        
-
-        <div class="mb-6 bg-blue-50 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold mb-3">External Response Collection</h3>
-            
-            <div class="mb-4 flex space-x-2 items-center">
-                <strong class="mr-2">External Survey Link:</strong>
-                <input type="text" id="external-survey-link" readonly 
-                    value="{{ request.scheme }}://{{ request.get_host }}/survey/take/{{ survey.external_link }}" 
-                    class="flex-grow rounded-md border-gray-300 bg-gray-100 p-1 text-sm">
-                <button onclick="copyToClipboard('external-survey-link')" 
-                    class="text-xs bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                    Copy
-                </button>
-                <a href="{% url 'survey_qr_code' survey.id %}" 
-                    download="survey_qr_code_{{ survey.id }}.png"
-                    class="text-xs bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
-                    QR
-                </a>
-            </div>
-
-            <div class="mb-4">
-                <form method="post" action="{% url 'surveys:update_external_responses' survey.id %}" class="space-y-4">
-                    {% csrf_token %}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Maximum External Responses:</label>
-                        <input type="number" name="max_external_responses" 
-                            value="{{ survey.max_external_responses|default:'' }}" 
-                            placeholder="Enter maximum responses (e.g., 2000)"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    </div>
-                    <button type="submit" 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Update Limit
+        <!-- Survey Description -->
+        <p class="text-gray-700 mb-8">{{ survey.description }}</p>
+        <!-- External Response Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- External Survey Link and Controls -->
+            <div class="bg-blue-50 p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">External Response Collection</h3>
+                <!-- External Survey Link -->
+                <div class="mb-4 flex items-center space-x-4">
+                    <input type="text" id="external-survey-link" readonly 
+                        value="{{ request.scheme }}://{{ request.get_host }}/survey/take/{{ survey.external_link }}" 
+                        class="w-full p-2 border rounded-md bg-gray-100 text-sm">
+                    <button onclick="copyToClipboard('external-survey-link')" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded-md text-xs flex items-center space-x-2 hover:bg-blue-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        Copy
                     </button>
-                </form>
-            </div>
-
-            <div class="bg-white p-3 rounded-md">
-                <p class="text-sm">
-                    <span class="font-medium">Current Status:</span>
-                    {{ survey.external_response_count }}{% if survey.max_external_responses %}/{{ survey.max_external_responses }}{% endif %} responses collected
-                    {% if survey.max_external_responses and survey.external_response_count >= survey.max_external_responses %}
-                        <span class="text-red-500">(Limit Reached)</span>
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-
-        <div class="mt-6 bg-yellow-50 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold mb-3">Survey Expiry</h3>
-            
-            <form method="post" action="{% url 'surveys:update_survey_expiry' survey.id %}" class="space-y-4">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Expiry Date and Time:</label>
-                    <input type="datetime-local" 
-                           name="expiry_datetime" 
-                           value="{% if survey.expiry_datetime %}{{ survey.expiry_datetime|date:'Y-m-d\TH:i' }}{% endif %}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <a href="{% url 'survey_qr_code' survey.id %}" download="survey_qr_code_{{ survey.id }}.png"
+                        class="bg-green-500 text-white px-4 py-2 rounded-md text-xs flex items-center space-x-2 hover:bg-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                        </svg>
+                        QR
+                    </a>
                 </div>
-                <button type="submit" 
-                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
-                    Update Expiry
-                </button>
-            </form>
-
-            {% if survey.expiry_datetime %}
-            <div class="mt-4 bg-white p-3 rounded-md">
-                <p class="text-sm">
-                    <span class="font-medium">Current Expiry:</span> 
-                    {{ survey.expiry_datetime|date:"F d, Y H:i" }}
-                    {% if survey.is_expired %}
-                        <span class="text-red-500 ml-2">(Expired)</span>
-                    {% endif %}
-                </p>
+                <!-- Max External Responses -->
+                <div>
+                    <form method="post" action="{% url 'surveys:update_external_responses' survey.id %}" class="space-y-4">
+                        {% csrf_token %}
+                        <label for="max_external_responses" class="block text-sm font-medium text-gray-700">Maximum External Responses:</label>
+                        <input type="number" name="max_external_responses" value="{{ survey.max_external_responses|default:'' }}" 
+                               class="block w-full p-2 border rounded-md text-sm bg-gray-100">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md mt-4 hover:bg-blue-700">Update Limit</button>
+                    </form>
+                </div>
+                <!-- Response Status -->
+                <div class="mt-4 bg-white p-3 rounded-md">
+                    <p class="text-sm">
+                        <span class="font-medium">Current Status:</span>
+                        {{ survey.external_response_count }}{% if survey.max_external_responses %}/{{ survey.max_external_responses }}{% endif %} responses collected
+                        {% if survey.max_external_responses and survey.external_response_count >= survey.max_external_responses %}
+                            <span class="text-red-500">(Limit Reached)</span>
+                        {% endif %}
+                    </p>
+                </div>
             </div>
-            {% endif %}
+            <!-- Survey Expiry Section -->
+            <div class="bg-yellow-50 p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4 text-yellow-700">Survey Expiry</h3>
+                <form method="post" action="{% url 'surveys:update_survey_expiry' survey.id %}" class="space-y-4">
+                    {% csrf_token %}
+                    <label for="expiry_datetime" class="block text-sm font-medium text-gray-700">Expiry Date and Time:</label>
+                    <input type="datetime-local" name="expiry_datetime" 
+                        value="{% if survey.expiry_datetime %}{{ survey.expiry_datetime|date:'Y-m-d\TH:i' }}{% endif %}" 
+                        class="block w-full p-2 border rounded-md bg-gray-100">
+                    <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 mt-4">Update Expiry</button>
+                </form>
+                {% if survey.expiry_datetime %}
+                <div class="mt-4 bg-white p-3 rounded-md">
+                    <p class="text-sm">
+                        <span class="font-medium">Current Expiry:</span> 
+                        {{ survey.expiry_datetime|date:"F d, Y H:i" }}
+                        {% if survey.is_expired %}
+                            <span class="text-red-500 ml-2">(Expired)</span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-
-        <h2 class="text-xl font-semibold mb-4">Questions</h2>
+        <!-- Survey Questions Section -->
+        <h2 class="text-xl font-semibold mb-6">Questions</h2>
         {% for question in survey.questions.all %}
         <div class="border-b py-4">
-            <p class="font-medium">{{ question.text }}</p>
+            <p class="font-medium text-lg">{{ question.text }}</p>
             <p class="text-sm text-gray-600">Type: {{ question.get_question_type_display }}</p>
-            
             {% if question.question_type == 'multiple_choice' or question.question_type == 'checkbox' or question.question_type == 'radio' %}
             <div class="mt-2">
                 <strong>Choices:</strong>
@@ -125,70 +130,58 @@
             {% endif %}
         </div>
         {% endfor %}
-
-        <div class="mt-6 flex space-x-4">
-            <a href="{% url 'surveys:survey_results' survey.id %}" 
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                View Results
-            </a>
+        <!-- Actions -->
+        <div class="mt-6 flex space-x-4 justify-center">
+            <a href="{% url 'surveys:survey_results' survey.id %}" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">View Results</a>
             <a href="{% url 'surveys:take_survey' survey.unique_link %}" 
-                class="{% if survey.is_expired %}bg-gray-400 cursor-not-allowed{% else %}bg-green-500 hover:bg-green-700{% endif %} text-white font-bold py-2 px-4 rounded"
+                class="{% if survey.is_expired %}bg-gray-400 cursor-not-allowed{% else %}bg-green-500 hover:bg-green-700{% endif %} text-white font-bold py-2 px-4 rounded-md" 
                 {% if survey.is_expired %}disabled{% endif %}>
                 Take Survey
             </a>
         </div>
-
+        <!-- Send to Respondent Group Section -->
         {% if survey.is_active %}
-            <div class="mt-6">
-                <h2 class="text-xl font-semibold mb-4">Send Survey to Respondent Group</h2>
-                <form method="post" action="{% url 'surveys:send_survey_to_group' survey_id=survey.id %}" class="bg-gray-100 p-4 rounded">
-                    {% csrf_token %}
-                    <div class="mb-4">
-                        <label for="respondent_group" class="block text-gray-700 text-sm font-bold mb-2">
-                            Select Respondent Group
-                        </label>
-                        <select name="respondent_group" id="respondent_group" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                            <option value="">-- Select a Group --</option>
-                            {% for group in request.user.respondentgroup_set.all %}
-                                <option value="{{ group.id }}">{{ group.name }} ({{ group.respondents.count }} respondents)</option>
-                            {% empty %}
-                                <option disabled>No groups available</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                                        <div class="mb-4">
-                        <label for="points" class="block text-gray-700 text-sm font-bold mb-2">
-                            Points for Survey
-                        </label>
-                        <input type="number" name="points" id="points" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                    </div>
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Send Survey
-                    </button>
-                      <a href="{% url 'profiling' %}" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Create Group
-                    </a>
-                </form>
-            </div>
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold mb-4">Send Survey to Respondent Group</h2>
+            <form method="post" action="{% url 'surveys:send_survey_to_group' survey_id=survey.id %}" class="bg-gray-100 p-6 rounded-lg flex items-center space-x-4">
+                {% csrf_token %}
+                <div class="flex-1">
+                    <label for="respondent_group" class="block text-sm font-bold text-gray-700 mb-2">Select Respondent Group</label>
+                    <select name="respondent_group" id="respondent_group" class="w-full p-2 border rounded-md bg-gray-100 text-sm">
+                        <option value="">-- Select a Group --</option>
+                        {% for group in request.user.respondentgroup_set.all %}
+                        <option value="{{ group.id }}">{{ group.name }} ({{ group.respondents.count }} respondents)</option>
+                        {% empty %}
+                        <option disabled>No groups available</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="points" class="block text-sm font-bold text-gray-700 mb-2">Points for Survey</label>
+                    <input type="number" name="points" id="points" required class="w-full p-2 border rounded-md bg-gray-100 text-sm">
+                </div>
+                <div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700">Send Survey</button>
+                </div>
+            </form>
+        </div>
         {% else %}
-            <p class="text-red-500">This survey is currently inactive.</p>
+        <p class="text-red-500 mt-4 text-center">This survey is currently inactive.</p>
         {% endif %}
     </div>
-
     <script>
-    function copyToClipboard(elementId) {
-        const copyText = document.getElementById(elementId);
-        copyText.select();
-        copyText.setSelectionRange(0, 99999); // For mobile devices
-
-        // Copy the text
-        navigator.clipboard.writeText(copyText.value).then(function() {
-            alert('Link copied to clipboard!');
-        }, function(err) {
-            console.error('Could not copy text: ', err);
-        });
-    }
+        function copyToClipboard(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            // Copy the text
+            navigator.clipboard.writeText(copyText.value).then(function() {
+                alert('Link copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
     </script>
 </body>
 </html>
+

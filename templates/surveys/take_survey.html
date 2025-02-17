@@ -4,87 +4,115 @@
     <meta charset="UTF-8">
     <title>{{ survey.title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .animated-bg {
+            background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB
+);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        .neon-btn {
+            background-color: #FF00CC;
+            color: white;
+            box-shadow: 0 0 10px #FF00CC, 0 0 20px #FF00CC, 0 0 30px #FF00CC;
+            transition: 0.3s ease-in-out;
+        }
+        .neon-btn:hover {
+            background-color: #6A11CB;
+            box-shadow: 0 0 10px #6A11CB, 0 0 20px #6A11CB, 0 0 30px #6A11CB;
+        }
+        .focus:ring-indigo-500:focus {
+            border-color: #6A11CB;
+            box-shadow: 0 0 5px #6A11CB;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold mb-4">{{ survey.title }}</h1>
-        <p class="text-gray-600 mb-6">{{ survey.description }}</p>
-
+<body class="animated-bg min-h-screen bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold mb-4 text-center text-indigo-600">{{ survey.title }}</h1>
+        <p class="text-lg text-gray-700 mb-6 text-center">{{ survey.description }}</p>
         {% if messages %}
-        <div class="mb-4">
+        <div class="mb-6">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded">
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-3 rounded-lg shadow-md transition duration-300 hover:translate-y-1">
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
-
-        <form method="post" id="surveyForm" class="space-y-6">
+        <form method="post" id="surveyForm" class="space-y-8">
             {% csrf_token %}
             {% for question in survey.questions.all %}
-            <div class="border-b pb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ question.text }} 
+            <div class="border-b pb-6">
+                <label class="block text-lg font-medium text-gray-800 mb-3">
+                    {{ question.text }}
+                    {% if question.is_required %}
+                    <span class="text-red-500">*</span>
+                    {% endif %}
                 </label>
-
                 {% if question.question_type == 'text' %}
                 <input type="text" name="question_{{ question.id }}" 
                     {% if question.is_required %}required{% endif %}
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2" placeholder="Your answer here">
                 {% elif question.question_type == 'multiple_choice' or question.question_type == 'radio' %}
-                {% for choice in question.choices.all %}
-                <div class="flex items-center">
-                    <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" 
-                        {% if question.is_required %}required{% endif %}
-                        class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <label class="ml-2 block text-sm text-gray-900">{{ choice.text }}</label>
+                <div class="space-y-4">
+                    {% for choice in question.choices.all %}
+                    <div class="flex items-center">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" 
+                            {% if question.is_required %}required{% endif %}
+                            class="h-5 w-5 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <label class="ml-3 block text-sm text-gray-900">{{ choice.text }}</label>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-
                 {% elif question.question_type == 'checkbox' %}
-                {% for choice in question.choices.all %}
-                <div class="flex items-center">
-                    <input type="checkbox" name="question_{{ question.id }}" value="{{ choice.id }}"
-                        class="h-4 w-4 border-gray-300 rounded text-indigo-600 focus:ring-indigo-500">
-                    <label class="ml-2 block text-sm text-gray-900">{{ choice.text }}</label>
+                <div class="space-y-4">
+                    {% for choice in question.choices.all %}
+                    <div class="flex items-center">
+                        <input type="checkbox" name="question_{{ question.id }}" value="{{ choice.id }}"
+                            class="h-5 w-5 border-gray-300 rounded text-indigo-600 focus:ring-indigo-500">
+                        <label class="ml-3 block text-sm text-gray-900">{{ choice.text }}</label>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
                 {% endif %}
             </div>
             {% endfor %}
-
             <button type="submit" 
-                class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-6 rounded-lg transform hover:scale-105 transition-all duration-300">
                 Submit Survey
             </button>
         </form>
     </div>
-
     <script>
-        document.getElementById('surveyForm').addEventListener('submit', function(e) {
-            // Validate all questions are answered
+        document.getElementById('surveyForm').addEventListener('submit', function (e) {
             const requiredQuestions = document.querySelectorAll('[required]');
             for (let question of requiredQuestions) {
                 const questionType = question.getAttribute('name').split('_')[0];
                 const questionId = question.getAttribute('name').split('_')[1];
-
                 if (questionType === 'question') {
                     const questionContainer = question.closest('.border-b');
                     const questionText = questionContainer.querySelector('label').textContent.trim();
-
                     if (question.type === 'text' && !question.value.trim()) {
                         e.preventDefault();
                         alert(`Please answer the question: ${questionText}`);
                         question.focus();
                         return;
                     }
-
                     if (question.type === 'radio') {
                         const radioGroup = document.getElementsByName(question.name);
                         const isChecked = Array.from(radioGroup).some(radio => radio.checked);
-                        
                         if (!isChecked) {
                             e.preventDefault();
                             alert(`Please select an option for the question: ${questionText}`);

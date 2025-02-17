@@ -7,74 +7,104 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .animated-bg {
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB
+);
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
         }
-
         @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .hover-translate {
+            transition: transform 0.3s ease-in-out;
+        }
+        .hover-translate:hover {
+            transform: translateY(-10px);
+        }
+        .neon-effect {
+            text-shadow: 0 0 5px #FF00CC, 0 0 10px #FF00CC, 0 0 20px #FF00CC, 0 0 40px #FF00CC;
+        }
+        .neon-btn {
+            background-color: #FF00CC;
+            color: white;
+            box-shadow: 0 0 10px #FF00CC, 0 0 20px #FF00CC, 0 0 30px #FF00CC;
+        }
+        .neon-btn:hover {
+            background-color: #6A11CB;
+            box-shadow: 0 0 10px #6A11CB, 0 0 20px #6A11CB, 0 0 30px #6A11CB;
         }
     </style>
 </head>
 <body class="animated-bg min-h-screen bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-white shadow-lg p-2 rounded">Survey Dashboard</h1>
+    <div class="absolute top-4 left-4">
+        <a href="{% url 'surveymonitor' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+    </div>
+    <div class="container mx-auto px-6 py-12">
+        <div class="flex flex-col items-center mb-8">
+            <h1 class="text-4xl font-bold text-white shadow-lg p-4 rounded-lg neon-effect text-center">Survey Dashboard</h1>
             <a href="{% url 'surveys:create_survey' %}" 
-               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition transform hover:scale-105 shadow-md">
+               class="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white font-bold py-3 px-6 rounded-full transform hover:scale-105 shadow-md transition duration-300 mt-4">
                 <i class="fas fa-plus mr-2"></i>Create New Survey
             </a>
         </div>
-
         {% if messages %}
-        <div class="mb-4">
+        <div class="mb-6">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded shadow-md">
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-3 rounded-lg shadow-md transition duration-300 hover:translate-y-1">
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
-
         {% if surveys %}
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for survey in surveys %}
-            <div class="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                <h2 class="text-xl font-semibold mb-2 text-gray-800 flex items-center">
+            <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover-translate slide-in">
+                <h2 class="text-2xl font-semibold mb-2 text-gray-800 flex items-center">
                     <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                     {{ survey.title }}
                 </h2>
-                <p class="text-gray-600 mb-4 truncate">{{ survey.description|default:"No description" }}</p>
-                
+                <p class="text-gray-600 mb-4 truncate">{{ survey.description|default:"No description available" }}</p>
                 <div class="flex items-center text-sm text-gray-500 mb-2">
                     <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
                     Created: {{ survey.created_at|date:"M d, Y" }}
                 </div>
-
                 <div class="flex items-center text-sm text-gray-500 mb-4">
                     <i class="fas fa-question-circle mr-2 text-green-500"></i>
                     Questions: {{ survey.questions.count }}
                 </div>
-
                 <div class="flex items-center text-sm text-gray-500 mb-4">
                     <i class="fas fa-poll mr-2 text-purple-500"></i>
                     Responses: {{ survey.responses.count }}
                 </div>
-
                 <a href="{% url 'surveys:survey_detail' survey.id %}" 
-                   class="w-full bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 px-4 rounded-lg text-center font-semibold transition-colors">
+                   class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-center shadow-md hover:scale-105 transition duration-200">
                     View Details
-                </a>
-                <a href="{% url 'surveys:take_survey' survey.unique_link %}" 
-                   class="w-full bg-green-50 text-green-700 hover:bg-green-100 py-2 px-4 rounded-lg text-center font-semibold transition-colors mt-2">
-                    Take Survey
                 </a>
                 <form method="post" action="{% url 'surveys:deactivate_survey' survey.id %}" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="w-full bg-yellow-50 text-yellow-700 hover:bg-yellow-100 py-2 px-4 rounded-lg text-center font-semibold transition-colors mt-2" onclick="return confirm('Are you sure you want to deactivate this survey?');">
+                    <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-2 px-4 rounded-lg text-center shadow-md hover:scale-105 transition duration-200 mt-2" onclick="return confirm('Are you sure you want to deactivate this survey?');">
                         Deactivate Survey
                     </button>
                 </form>
@@ -82,12 +112,12 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="text-center bg-white rounded-lg p-8 shadow-md">
+        <div class="text-center bg-white rounded-lg p-8 shadow-md hover-translate">
             <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
-            <h2 class="text-xl text-gray-600">No surveys created yet</h2>
+            <h2 class="text-2xl text-gray-600 font-semibold">No surveys created yet</h2>
             <p class="text-gray-500 mb-4">Start by creating your first survey!</p>
             <a href="{% url 'surveys:create_survey' %}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-200">
+               class="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-md transform hover:scale-105 transition-transform duration-200">
                 Create Survey
             </a>
         </div>
@@ -95,3 +125,4 @@
     </div>
 </body>
 </html>
+

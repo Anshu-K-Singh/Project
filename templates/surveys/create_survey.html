@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -13,52 +15,67 @@
         }
 
         @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
     </style>
 </head>
+
 <body class="animated-bg min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-3xl w-full space-y-8 bg-white shadow-2xl rounded-xl p-8">
-        <div class="text-center">
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Create a New Survey</h2>
-            <p class="mt-2 text-sm text-gray-600">Design your survey with custom questions</p>
+    <div class="absolute top-4 left-4">
+        <a href="{% url 'surveys:home' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="max-w-4xl w-full bg-white shadow-xl rounded-2xl p-8 space-y-6 transform transition duration-500 hover:scale-105">
+        <div class="text-center mb-6">
+            <h2 class="text-4xl font-extrabold text-gray-800">Create a New Survey</h2>
+            <p class="mt-2 text-lg text-gray-600">Design your survey with custom questions</p>
         </div>
-        
+
         {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} px-4 py-2 rounded shadow-md">
+            <div class="{% if message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %} p-4 rounded-lg shadow-md">
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <form id="surveyForm" method="post" class="space-y-6">
+        <form id="surveyForm" method="post" class="space-y-8">
             {% csrf_token %}
-            
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">{{ survey_form.title.label }}</label>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Survey Title</label>
                     {{ survey_form.title }}
                     {% if survey_form.title.errors %}
                     <p class="mt-2 text-sm text-red-600">
                         {% for error in survey_form.title.errors %}
-                            {{ error }}
+                        {{ error }}
                         {% endfor %}
                     </p>
                     {% endif %}
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">{{ survey_form.description.label }}</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Survey Description</label>
                     {{ survey_form.description }}
                     {% if survey_form.description.errors %}
                     <p class="mt-2 text-sm text-red-600">
                         {% for error in survey_form.description.errors %}
-                            {{ error }}
+                        {{ error }}
                         {% endfor %}
                     </p>
                     {% endif %}
@@ -69,35 +86,33 @@
                 <!-- Questions will be dynamically added here -->
             </div>
 
-            <button type="button" onclick="addQuestion()" 
-                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition transform hover:scale-105">
+            <button type="button" onclick="addQuestion()" class="group w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out transform hover:scale-105">
                 <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                    <i class="fas fa-plus text-blue-500 group-hover:text-blue-400"></i>
+                    <i class="fas fa-plus-circle text-white group-hover:text-indigo-300"></i>
                 </span>
                 Add Question
             </button>
 
-            <button type="submit" 
-                class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition transform hover:scale-105">
-                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                    <i class="fas fa-save text-green-500 group-hover:text-green-400"></i>
-                </span>
-                Create Survey
-            </button>
+            <div class="text-center">
+                <button type="submit" class="w-full py-3 px-6 font-semibold text-lg text-white bg-green-600 hover:bg-green-700 rounded-xl shadow-md transform hover:scale-105 transition duration-300">
+                    Create Survey
+                </button>
+            </div>
         </form>
 
+        <!-- Confirmation Modal -->
         <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-                <h2 class="text-2xl font-bold mb-4 text-center">Confirm Survey Submission</h2>
+            <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
+                <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Confirm Survey Submission</h2>
                 <p class="text-gray-600 mb-6 text-center">Are you sure you want to submit this survey?</p>
                 <div class="flex justify-between">
-                    <button id="editSurveyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
+                    <button id="editSurveyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full">
                         Edit Survey
                     </button>
-                    <button id="confirmSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                    <button id="confirmSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full">
                         Confirm Submission
                     </button>
-                    <button id="cancelSubmitBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                    <button id="cancelSubmitBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full">
                         Cancel
                     </button>
                 </div>
@@ -112,52 +127,41 @@
         function repopulateQuestions() {
             const existingQuestions = {{ existing_questions|safe|default:'[]' }};
             const container = document.getElementById('questionsContainer');
-            
+
             existingQuestions.forEach(question => {
                 questionCounter++;
                 const questionDiv = document.createElement('div');
-                questionDiv.className = 'border p-4 rounded mt-4 bg-gray-50 relative';
+                questionDiv.className = 'border p-6 rounded-lg bg-gray-50 shadow-lg mt-4 relative';
                 questionDiv.innerHTML = `
-                    <button type="button" onclick="this.closest('div').remove()" 
-                        class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                    <button type="button" onclick="this.closest('div').remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
                         ✕
                     </button>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Question Text</label>
-                        <input type="text" name="question_text" required 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                            value="${question.text}">
+                        <input type="text" name="question_text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3" value="${question.text}">
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Question Type</label>
-                        <select name="question_type" onchange="toggleChoices(this)" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <select name="question_type" onchange="toggleChoices(this)" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
                             <option value="text" ${question.type === 'text' ? 'selected' : ''}>Text</option>
                             <option value="multiple_choice" ${question.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
                             <option value="checkbox" ${question.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
                             <option value="radio" ${question.type === 'radio' ? 'selected' : ''}>Radio</option>
                         </select>
                     </div>
-                    <div id="choices_container_${questionCounter}" 
-                        class="${['multiple_choice', 'checkbox', 'radio'].includes(question.type) ? '' : 'hidden'}">
+                    <div id="choices_container_${questionCounter}" class="${['multiple_choice', 'checkbox', 'radio'].includes(question.type) ? '' : 'hidden'}">
                         <label class="block text-sm font-medium text-gray-700">Choices</label>
                         <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
                             ${question.choices.map((choice, index) => `
                                 <div class="flex items-center">
-                                    <input type="text" 
-                                        name="choices_${questionCounter}[]" 
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
-                                        placeholder="Enter choice"
-                                        value="${choice}">
-                                    <button type="button" onclick="removeChoice(this)" 
-                                        class="text-red-500 hover:text-red-700">
+                                    <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice" value="${choice}">
+                                    <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                                         ✕
                                     </button>
                                 </div>
                             `).join('')}
                         </div>
-                        <button type="button" onclick="addChoice(${questionCounter})" 
-                            class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-1 px-2 rounded text-sm">
+                        <button type="button" onclick="addChoice(${questionCounter})" class="bg-indigo-400 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-full text-sm">
                             Add Choice
                         </button>
                     </div>
@@ -167,7 +171,7 @@
         }
 
         // Call repopulateQuestions when the page loads if there are existing questions
-        window.onload = function() {
+        window.onload = function () {
             repopulateQuestions();
         };
 
@@ -175,21 +179,18 @@
             questionCounter++;
             const container = document.getElementById('questionsContainer');
             const questionDiv = document.createElement('div');
-            questionDiv.className = 'border p-4 rounded mt-4 bg-gray-50 relative';
+            questionDiv.className = 'border p-6 rounded-lg bg-gray-50 shadow-lg mt-4 relative';
             questionDiv.innerHTML = `
-                <button type="button" onclick="this.closest('div').remove()" 
-                    class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                <button type="button" onclick="this.closest('div').remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
                     ✕
                 </button>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Question Text</label>
-                    <input type="text" name="question_text" required 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <input type="text" name="question_text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Question Type</label>
-                    <select name="question_type" onchange="toggleChoices(this)" 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <select name="question_type" onchange="toggleChoices(this)" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
                         <option value="text">Text</option>
                         <option value="multiple_choice">Multiple Choice</option>
                         <option value="checkbox">Checkbox</option>
@@ -200,18 +201,13 @@
                     <label class="block text-sm font-medium text-gray-700">Choices</label>
                     <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
                         <div class="flex items-center">
-                            <input type="text" 
-                                name="choices_${questionCounter}[]" 
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
-                                placeholder="Enter choice">
-                            <button type="button" onclick="removeChoice(this)" 
-                                class="text-red-500 hover:text-red-700">
+                            <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
+                            <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                                 ✕
                             </button>
                         </div>
                     </div>
-                    <button type="button" onclick="addChoice(${questionCounter})" 
-                        class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-1 px-2 rounded text-sm">
+                    <button type="button" onclick="addChoice(${questionCounter})" class="bg-indigo-400 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-full text-sm">
                         Add Choice
                     </button>
                 </div>
@@ -229,12 +225,8 @@
             const newChoiceDiv = document.createElement('div');
             newChoiceDiv.className = 'flex items-center';
             newChoiceDiv.innerHTML = `
-                <input type="text" 
-                    name="choices_${questionId}[]" 
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm mr-2"
-                    placeholder="Enter choice">
-                <button type="button" onclick="removeChoice(this)" 
-                    class="text-red-500 hover:text-red-700">
+                <input type="text" name="choices_${questionId}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
+                <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                     ✕
                 </button>
             `;
@@ -244,8 +236,7 @@
         function removeChoice(button) {
             const choiceDiv = button.closest('div');
             const choicesList = choiceDiv.parentElement;
-            
-            // Prevent removing the last choice if it's the only one
+
             if (choicesList.children.length > 1) {
                 choiceDiv.remove();
             }
@@ -257,12 +248,12 @@
         const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
         const editSurveyBtn = document.getElementById('editSurveyBtn');
 
-        surveyForm.addEventListener('submit', function(e) {
+        surveyForm.addEventListener('submit', function (e) {
             e.preventDefault(); // Stop form from submitting immediately
 
             // Validate form before showing modal
             const questions = document.querySelectorAll('input[name="question_text"]');
-            
+
             if (questions.length === 0) {
                 alert('At least one question is required.');
                 return;
@@ -274,11 +265,11 @@
                 if (['multiple_choice', 'checkbox', 'radio'].includes(questionType)) {
                     const choicesContainer = questionInput.closest('.border').querySelector('div[id^="choices_container_"]');
                     const choiceInputs = choicesContainer.querySelectorAll('input[name^="choices_"]');
-                    
+
                     const validChoices = Array.from(choiceInputs)
                         .map(input => input.value.trim())
                         .filter(value => value !== '');
-                    
+
                     if (validChoices.length < 2) {
                         alert(`Question "${questionInput.value}" requires at least two choices.`);
                         return;
@@ -291,22 +282,23 @@
             confirmationModal.classList.add('flex');
         });
 
-        confirmSubmitBtn.addEventListener('click', function() {
+        confirmSubmitBtn.addEventListener('click', function () {
             // Actually submit the form
             surveyForm.submit();
         });
 
-        cancelSubmitBtn.addEventListener('click', function() {
+        cancelSubmitBtn.addEventListener('click', function () {
             // Hide modal
             confirmationModal.classList.add('hidden');
             confirmationModal.classList.remove('flex');
         });
 
-        editSurveyBtn.addEventListener('click', function() {
+        editSurveyBtn.addEventListener('click', function () {
             // Hide modal
             confirmationModal.classList.add('hidden');
             confirmationModal.classList.remove('flex');
         });
     </script>
 </body>
+
 </html>
