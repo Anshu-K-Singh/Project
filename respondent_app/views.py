@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import RespondentProfileForm
-from .models import Respondent
+from .models import Respondent, RespondentGroup
 from surveys.models import SurveyNotification
-from surveyapp.models import Poll, PollResponse, PollChoice
+from surveyapp.models import Poll, PollResponse, PollChoice, HostedSurvey
 
 # Create your views here.
 @login_required
@@ -52,10 +52,15 @@ def edit_profile(request):
     except Respondent.DoesNotExist:
         return redirect('respondent_app:complete_profile')
 
-
+from django.db.models import Q
 @login_required
 def respondent_dashboard(request):
     respondent = Respondent.objects.get(user=request.user)
+    # Get hosted surveys for the respondent's groups
+    hosted_surveys = HostedSurvey.objects.filter(
+        Q(assigned_groups__in=respondent.groups.all()) | Q(assigned_groups__isnull=True),
+        is_active=True
+    ).distinct()
     
     # Check if profile is complete
     profile_complete = all([
@@ -100,6 +105,7 @@ def respondent_dashboard(request):
         'shared_polls': shared_polls,
         'voted_polls': voted_polls,
         'total_points': total_points,
+        'hosted_surveys': hosted_surveys
     }
     
     return render(request, 'respondent_app/respondent_dashboard.html', context)
@@ -172,7 +178,7 @@ def delete_survey_history(request, response_id):
         }, status=500)
 
 
-from surveys.models import Survey, Response
+from surveys.models import Survey
 from django.utils.timezone import now, timedelta
 @login_required
 def survey_wall(request):
@@ -264,5 +270,3 @@ def take_poll(request, poll_id):
         'poll': poll
     }
     return render(request, 'respondent_app/take_poll.html', context)
-
-

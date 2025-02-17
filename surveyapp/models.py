@@ -123,3 +123,20 @@ class PollResponse(models.Model):
 
     def __str__(self):
         return f"{self.respondent} - {self.poll}"
+
+
+from django.contrib.auth.models import User
+from respondent_app.models import RespondentGroup
+class HostedSurvey(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    external_link = models.URLField()
+    company_name = models.CharField(max_length=100)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    click_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    assigned_groups = models.ManyToManyField(RespondentGroup, blank=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.company_name}"

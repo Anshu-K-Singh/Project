@@ -601,13 +601,80 @@ def generate_survey_qr_code(request, survey_id):
     return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 
+from .models import HostedSurvey
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+from respondent_app.models import RespondentGroup
 
+class SurveyHostView(LoginRequiredMixin, View):
+    def get(self, request):
+        # Get all hosted surveys created by the user
+        hosted_surveys = HostedSurvey.objects.filter(created_by=request.user).prefetch_related('assigned_groups')
+        
+        # Prepare survey details with group information
+        survey_details = []
+        for survey in hosted_surveys:
+            survey_details.append({
+                'survey': survey,
+                'assigned_groups': list(survey.assigned_groups.all()),
+                'total_groups': survey.assigned_groups.count(),
+                'click_count': survey.click_count,
+                'created_at': survey.created_at
+            })
+        
+        # Get all respondent groups for potential assignment
+        respondent_groups = RespondentGroup.objects.all()
+        
+        return render(request, 'surveyapp/survey_host.html', {
+            'survey_details': survey_details,
+            'respondent_groups': respondent_groups
+        })
 
+    def post(self, request):
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        external_link = request.POST.get('external_link')
+        company_name = request.POST.get('company_name')
+        group_ids = request.POST.getlist('groups')
 
+        survey = HostedSurvey.objects.create(
+            title=title,
+            description=description,
+            external_link=external_link,
+            company_name=company_name,
+            created_by=request.user
+        )
+        
+        # Assign groups if any
+        if group_ids:
+            survey.assigned_groups.set(group_ids)
+        
+        messages.success(request, "Survey has been hosted successfully!")
+        return redirect('survey_host')
 
+@login_required
+def delete_hosted_survey(request, survey_id):
+    if request.method == 'POST':
+        try:
+            survey = HostedSurvey.objects.get(id=survey_id, created_by=request.user)
+            survey.delete()
+            messages.success(request, "Survey has been deleted successfully.")
+        except HostedSurvey.DoesNotExist:
+            messages.error(request, "Survey not found or you do not have permission to delete it.")
+    else:
+        messages.error(request, "Invalid request method.")
+    return redirect('survey_host')
 
-
-
+def increment_survey_click(request, survey_id):
+    if request.method == 'POST':
+        try:
+            survey = get_object_or_404(HostedSurvey, id=survey_id)
+            survey.click_count += 1
+            survey.save(update_fields=['click_count'])
+            return JsonResponse({'status': 'success', 'count': survey.click_count})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 def news_page(request):
     return render(request, 'surveyapp/news.html')

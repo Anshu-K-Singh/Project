@@ -30,12 +30,17 @@ urlpatterns = [
     path('polls/<int:poll_id>/share/', views.share_poll, name='share_poll'),
     path('polls/<int:poll_id>/delete/', views.delete_poll, name='delete_poll'),
 
+    # Move this before other patterns to ensure it's matched correctly
+    path('survey-click/<int:survey_id>/', views.increment_survey_click, name='increment_survey_click'),
+
     # QR Code Generation URL
     path('survey/<int:survey_id>/qr-code/', views.generate_survey_qr_code, name='survey_qr_code'),
     path('news/', views.news_page, name='news'),
     path('support/', views.support_page, name='support'),
     path('submit-support-query/', views.submit_support_query, name='submit_support_query'),
     path('chatbot/', views.chatbot_response, name='chatbot_response'),
+    path('survey-host/', views.SurveyHostView.as_view(), name='survey_host'),
+    path('delete-hosted-survey/<int:survey_id>/', views.delete_hosted_survey, name='delete_hosted_survey'),
 ]
 #+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # handler404 = 'your_app_name.views.custom_404_view'

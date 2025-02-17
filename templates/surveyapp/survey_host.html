@@ -1,0 +1,170 @@
+{% extends 'surveyapp/home.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <div class="container mx-auto p-4">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Left Side: Hosted Surveys List -->
+            <div class="lg:w-3/5 bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="border-b p-4 bg-white sticky top-0 z-10">
+                    <h2 class="text-xl font-bold">Hosted Surveys</h2>
+                </div>
+                <div class="overflow-y-auto h-[calc(100vh-130px)]">
+                    <div class="p-4 space-y-3">
+                        {% for detail in survey_details %}
+                        <div class="border rounded-lg p-3 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="flex-grow">
+                                    <h3 class="font-semibold text-gray-800">{{ detail.survey.title }}</h3>
+                                    <p class="text-sm text-gray-600">{{ detail.survey.company_name }}</p>
+                                    <p class="text-sm text-gray-500 mt-1">{{ detail.survey.description }}</p>
+                                    
+                                    <div class="flex items-center gap-4 mt-2 text-sm">
+                                        <span class="text-purple-600">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span id="click-count-{{ detail.survey.id }}">{{ detail.click_count }}</span> clicks
+                                        </span>
+                                        <span class="text-blue-600">
+                                            <i class="fas fa-users"></i> {{ detail.total_groups }} groups
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        {% for group in detail.assigned_groups %}
+                                        <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                                            {{ group.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="copyLink('{{ detail.survey.external_link }}')"
+                                            class="text-purple-600 hover:text-purple-800 p-1">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <a href="{{ detail.survey.external_link }}" 
+                                       target="_blank"
+                                       class="text-purple-600 hover:text-purple-800 p-1">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                    <form action="{% url 'delete_hosted_survey' detail.survey.id %}" method="POST" class="w-full">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                onclick="return confirm('Are you sure you want to delete this survey?')"
+                                                class="text-red-500 hover:bg-red-50 p-1.5 rounded-full group transition-all duration-200 ease-in-out">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+                                                 class="w-5 h-5 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L6.16 5.79m8.474 0a24.268 24.268 0 0 1-8.634 0M14.74 5.677a5.248 5.248 0 0 0-3.74-1.577 5.25 5.25 0 0 0-3.74 1.577m7.48 0a48.64 48.64 0 0 0-7.48 0" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-gray-500 py-4">
+                            No surveys hosted yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Host Survey Form -->
+            <div class="lg:w-2/5">
+                <div class="bg-white rounded-lg shadow-lg p-4 sticky top-4">
+                    <h2 class="text-xl font-bold mb-4">Host New Survey</h2>
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Survey Title</label>
+                            <input type="text" name="title" required
+                                   class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                            <input type="text" name="company_name" required
+                                   class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Survey Link</label>
+                            <input type="url" name="external_link" required
+                                   class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea name="description" rows="2"
+                                    class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-purple-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Assign to Groups</label>
+                            <select name="groups" multiple
+                                    class="mt-1 w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-purple-500">
+                                {% for group in respondent_groups %}
+                                    <option value="{{ group.id }}">{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple groups</p>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" 
+                                    class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-300">
+                                Host Survey
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 4px;
+    }
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #c4b5fd;
+        border-radius: 2px;
+    }
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #9061f9;
+    }
+</style>
+
+<script>
+function copyLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Survey link copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy link: ', err);
+        alert('Failed to copy link. Please try again.');
+    });
+}
+
+function incrementClick(surveyId) {
+    fetch(`/survey-click/${surveyId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        },
+    })
+    .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok'))
+    .then(data => {
+        if (data.status === 'success') {
+            const countElement = document.getElementById(`click-count-${surveyId}`);
+            if (countElement) {
+                countElement.textContent = data.count;
+            }
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

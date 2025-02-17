@@ -5,3 +5,5 @@ from django.contrib import admin
 from .models import SignUpTrend, UserDemographic, UserInsight, UserSource
 
 # Register models in the admin interface
+from .models import HostedSurvey
+admin.site.register(HostedSurvey)
