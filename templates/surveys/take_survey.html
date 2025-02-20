@@ -75,6 +75,15 @@
                         <label class="ml-3 block text-sm text-gray-900">{{ choice.text }}</label>
                     </div>
                     {% endfor %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ message }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
                 {% elif question.question_type == 'checkbox' %}
                 <div class="space-y-4">

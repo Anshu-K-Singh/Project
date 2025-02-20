@@ -69,6 +69,7 @@ class Question(models.Model):
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
     text = models.CharField(max_length=200)
+    is_eligibility_flag = models.BooleanField(default=False)  # New field to mark eligibility
     
     def __str__(self):
         return self.text

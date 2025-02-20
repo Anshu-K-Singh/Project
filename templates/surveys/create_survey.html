@@ -155,6 +155,12 @@
                             ${question.choices.map((choice, index) => `
                                 <div class="flex items-center">
                                     <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice" value="${choice}">
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" name="is_eligibility_flag_${questionCounter}[]" class="form-check-input" id="eligibility_flag_${questionCounter}_${index}">
+                                        <label class="form-check-label" for="eligibility_flag_${questionCounter}_${index}">
+                                            Eligibility Flag
+                                        </label>
+                                    </div>
                                     <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                                         ✕
                                     </button>
@@ -202,6 +208,12 @@
                     <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
                         <div class="flex items-center">
                             <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="is_eligibility_flag_${questionCounter}[]" class="form-check-input" id="eligibility_flag_${questionCounter}_0">
+                                <label class="form-check-label" for="eligibility_flag_${questionCounter}_0">
+                                    Eligibility Flag
+                                </label>
+                            </div>
                             <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                                 ✕
                             </button>
@@ -226,6 +238,12 @@
             newChoiceDiv.className = 'flex items-center';
             newChoiceDiv.innerHTML = `
                 <input type="text" name="choices_${questionId}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="is_eligibility_flag_${questionId}[]" class="form-check-input" id="eligibility_flag_${questionId}_${choicesList.children.length}">
+                    <label class="form-check-label" for="eligibility_flag_${questionId}_${choicesList.children.length}">
+                        Eligibility Flag
+                    </label>
+                </div>
                 <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
                     ✕
                 </button>

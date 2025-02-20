@@ -87,9 +87,12 @@ class CreateSurveyView(LoginRequiredMixin, View):
                     if q_type in ['multiple_choice', 'checkbox', 'radio']:
                         # Construct the choices key dynamically
                         choices_key = f'choices_{index + 1}[]'
+                        eligibility_flag_key = f'is_eligibility_flag_{index + 1}[]'
                         
-                        # Get choices
+                        # Get choices and eligibility flags
                         choice_texts = request.POST.getlist(choices_key)
+                        eligibility_flags = request.POST.getlist(eligibility_flag_key)
+                        
                         choice_texts = [choice.strip() for choice in choice_texts if choice.strip()]
                         
                         # Validate choices
@@ -97,10 +100,11 @@ class CreateSurveyView(LoginRequiredMixin, View):
                             raise ValidationError(f"Multiple Choice, Checkbox, and Radio questions require at least two choices. Please add choices for the question: '{text}'.")
                         
                         # Create choices
-                        for choice_text in choice_texts:
+                        for i, choice_text in enumerate(choice_texts):
                             Choice.objects.create(
                                 question=question,
-                                text=choice_text
+                                text=choice_text,
+                                is_eligibility_flag=i < len(eligibility_flags) and eligibility_flags[i] == 'on'
                             )
                 
                 messages.success(request, "Survey created successfully!")
@@ -179,7 +183,44 @@ class TakeSurveyView(View):
                 messages.warning(request, "You have already responded to this survey.")
                 return redirect('respondent_app:dashboard')
         
-        # Validate all questions are answered
+        # Check if the survey has any eligibility flags at all
+        survey_has_eligibility_flags = any(
+            question.choices.filter(is_eligibility_flag=True).exists()
+            for question in survey.questions.all()
+        )
+        
+        # If survey has eligibility flags, perform comprehensive validation
+        if survey_has_eligibility_flags:
+            # Flag to track if survey is eligible
+            survey_is_eligible = True
+            
+            # Validate each question
+            for question in survey.questions.all():
+                # Get eligibility choices for this question
+                eligibility_choices = question.choices.filter(is_eligibility_flag=True)
+                
+                # If this question has eligibility choices
+                if eligibility_choices.exists():
+                    # Get the user's answer for this question
+                    user_answer = request.POST.getlist(f'question_{question.id}')
+                    
+                    # If no answer is provided
+                    if not user_answer:
+                        messages.error(request, f"Question '{question.text}' must be answered.")
+                        return render(request, 'surveys/take_survey.html', {'survey': survey})
+                    
+                    # Check if any of the selected choices are eligibility choices
+                    is_question_eligible = any(
+                        Choice.objects.filter(id=choice_id, is_eligibility_flag=True).exists() 
+                        for choice_id in user_answer
+                    )
+                    
+                    # If no eligible choice is selected, mark survey as ineligible
+                    if not is_question_eligible:
+                        messages.error(request, f"You are not eligible to take this survey. Only specific option(s) for '{question.text}' are allowed.")
+                        return render(request, 'surveys/take_survey.html', {'survey': survey})
+        
+        # Validate all questions are answered (existing validation)
         for question in survey.questions.all():
             answer = request.POST.get(f'question_{question.id}')
             if not answer:
