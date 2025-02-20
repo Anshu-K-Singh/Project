@@ -53,270 +53,205 @@
         </div>
         {% endif %}
 
-        <form id="surveyForm" method="post" class="space-y-8">
-            {% csrf_token %}
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Survey Title</label>
-                    {{ survey_form.title }}
-                    {% if survey_form.title.errors %}
-                    <p class="mt-2 text-sm text-red-600">
-                        {% for error in survey_form.title.errors %}
-                        {{ error }}
-                        {% endfor %}
-                    </p>
-                    {% endif %}
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold mb-8">Create New Survey</h1>
+            
+            <form method="post" id="surveyForm" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Survey Details -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Survey Details</h2>
+                    {{ survey_form.as_p }}
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Survey Description</label>
-                    {{ survey_form.description }}
-                    {% if survey_form.description.errors %}
-                    <p class="mt-2 text-sm text-red-600">
-                        {% for error in survey_form.description.errors %}
-                        {{ error }}
-                        {% endfor %}
-                    </p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div id="questionsContainer">
-                <!-- Questions will be dynamically added here -->
-            </div>
-
-            <button type="button" onclick="addQuestion()" class="group w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out transform hover:scale-105">
-                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                    <i class="fas fa-plus-circle text-white group-hover:text-indigo-300"></i>
-                </span>
-                Add Question
-            </button>
-
-            <div class="text-center">
-                <button type="submit" class="w-full py-3 px-6 font-semibold text-lg text-white bg-green-600 hover:bg-green-700 rounded-xl shadow-md transform hover:scale-105 transition duration-300">
-                    Create Survey
-                </button>
-            </div>
-        </form>
-
-        <!-- Confirmation Modal -->
-        <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-            <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
-                <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Confirm Survey Submission</h2>
-                <p class="text-gray-600 mb-6 text-center">Are you sure you want to submit this survey?</p>
-                <div class="flex justify-between">
-                    <button id="editSurveyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full">
-                        Edit Survey
-                    </button>
-                    <button id="confirmSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full">
-                        Confirm Submission
-                    </button>
-                    <button id="cancelSubmitBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let questionCounter = 0;
-
-        // Function to re-populate existing questions after validation error
-        function repopulateQuestions() {
-            const existingQuestions = {{ existing_questions|safe|default:'[]' }};
-            const container = document.getElementById('questionsContainer');
-
-            existingQuestions.forEach(question => {
-                questionCounter++;
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'border p-6 rounded-lg bg-gray-50 shadow-lg mt-4 relative';
-                questionDiv.innerHTML = `
-                    <button type="button" onclick="this.closest('div').remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                        ✕
-                    </button>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Question Text</label>
-                        <input type="text" name="question_text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3" value="${question.text}">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Question Type</label>
-                        <select name="question_type" onchange="toggleChoices(this)" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
-                            <option value="text" ${question.type === 'text' ? 'selected' : ''}>Text</option>
-                            <option value="multiple_choice" ${question.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
-                            <option value="checkbox" ${question.type === 'checkbox' ? 'selected' : ''}>Checkbox</option>
-                            <option value="radio" ${question.type === 'radio' ? 'selected' : ''}>Radio</option>
-                        </select>
-                    </div>
-                    <div id="choices_container_${questionCounter}" class="${['multiple_choice', 'checkbox', 'radio'].includes(question.type) ? '' : 'hidden'}">
-                        <label class="block text-sm font-medium text-gray-700">Choices</label>
-                        <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
-                            ${question.choices.map((choice, index) => `
-                                <div class="flex items-center">
-                                    <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice" value="${choice}">
-                                    <div class="form-check mt-2">
-                                        <input type="checkbox" name="is_eligibility_flag_${questionCounter}[]" class="form-check-input" id="eligibility_flag_${questionCounter}_${index}">
-                                        <label class="form-check-label" for="eligibility_flag_${questionCounter}_${index}">
-                                            Eligibility Flag
-                                        </label>
-                                    </div>
-                                    <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
-                                        ✕
-                                    </button>
-                                </div>
-                            `).join('')}
+                <!-- Pages Container -->
+                <div id="pagesContainer" class="space-y-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 page-section" data-page="0">
+                        <div class="flex justify-between items-center mb-4">
+                            <input type="text" name="page_title[]" class="form-input rounded-md" placeholder="Page Title" required>
+                            <input type="hidden" name="page_order[]" value="0">
+                            <button type="button" class="text-red-600 hover:text-red-800" onclick="removePage(this)" style="display: none;">
+                                <i class="fas fa-trash"></i> Remove Page
+                            </button>
                         </div>
-                        <button type="button" onclick="addChoice(${questionCounter})" class="bg-indigo-400 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-full text-sm">
-                            Add Choice
+                        
+                        <!-- Questions Container for this page -->
+                        <div class="questions-container space-y-4">
+                            <!-- Questions will be added here -->
+                        </div>
+                        
+                        <button type="button" class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600" onclick="addQuestion(this)">
+                            <i class="fas fa-plus"></i> Add Question
                         </button>
                     </div>
-                `;
-                container.appendChild(questionDiv);
-            });
-        }
-
-        // Call repopulateQuestions when the page loads if there are existing questions
-        window.onload = function () {
-            repopulateQuestions();
-        };
-
-        function addQuestion() {
-            questionCounter++;
-            const container = document.getElementById('questionsContainer');
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'border p-6 rounded-lg bg-gray-50 shadow-lg mt-4 relative';
-            questionDiv.innerHTML = `
-                <button type="button" onclick="this.closest('div').remove()" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                    ✕
-                </button>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Question Text</label>
-                    <input type="text" name="question_text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Question Type</label>
-                    <select name="question_type" onchange="toggleChoices(this)" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3">
+
+                <!-- Add Page Button -->
+                <button type="button" class="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600" onclick="addPage()">
+                    <i class="fas fa-plus"></i> Add New Page
+                </button>
+
+                <button type="submit" class="w-full bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-semibold">
+                    Create Survey
+                </button>
+            </form>
+        </div>
+
+        <script>
+            let pageCounter = 1;
+
+            function addPage() {
+                const pagesContainer = document.getElementById('pagesContainer');
+                const newPage = document.createElement('div');
+                newPage.className = 'bg-white rounded-lg shadow-md p-6 page-section';
+                newPage.dataset.page = pageCounter;
+                
+                newPage.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <input type="text" name="page_title[]" class="form-input rounded-md" placeholder="Page Title" required>
+                        <input type="hidden" name="page_order[]" value="${pageCounter}">
+                        <button type="button" class="text-red-600 hover:text-red-800" onclick="removePage(this)">
+                            <i class="fas fa-trash"></i> Remove Page
+                        </button>
+                    </div>
+                    <div class="questions-container space-y-4">
+                    </div>
+                    <button type="button" class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600" onclick="addQuestion(this)">
+                        <i class="fas fa-plus"></i> Add Question
+                    </button>
+                `;
+                
+                pagesContainer.appendChild(newPage);
+                pageCounter++;
+                
+                // Show remove buttons if there's more than one page
+                updateRemovePageButtons();
+            }
+
+            function removePage(button) {
+                if (document.querySelectorAll('.page-section').length > 1) {
+                    button.closest('.page-section').remove();
+                    updateRemovePageButtons();
+                }
+            }
+
+            function updateRemovePageButtons() {
+                const pages = document.querySelectorAll('.page-section');
+                pages.forEach(page => {
+                    const removeBtn = page.querySelector('button[onclick="removePage(this)"]');
+                    removeBtn.style.display = pages.length > 1 ? '' : 'none';
+                });
+            }
+
+            function addQuestion(button) {
+                const pageSection = button.closest('.page-section');
+                const pageIndex = pageSection.dataset.page;
+                const questionsContainer = pageSection.querySelector('.questions-container');
+                const questionCount = questionsContainer.querySelectorAll('.question-section').length + 1;
+                
+                const newQuestion = document.createElement('div');
+                newQuestion.className = 'question-section bg-gray-50 p-4 rounded-md';
+                newQuestion.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold">Question ${questionCount}</h3>
+                        <button type="button" class="text-red-600 hover:text-red-800" onclick="removeQuestion(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <input type="text" name="page_${pageIndex}_question_text" class="w-full mb-2 p-2 border rounded" placeholder="Enter your question" required>
+                    <select name="page_${pageIndex}_question_type" class="w-full mb-2 p-2 border rounded" onchange="toggleChoices(this)" required>
                         <option value="text">Text</option>
                         <option value="multiple_choice">Multiple Choice</option>
                         <option value="checkbox">Checkbox</option>
                         <option value="radio">Radio</option>
                     </select>
-                </div>
-                <div id="choices_container_${questionCounter}" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700">Choices</label>
-                    <div id="choicesList_${questionCounter}" class="space-y-2 mb-2">
-                        <div class="flex items-center">
-                            <input type="text" name="choices_${questionCounter}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
-                            <div class="form-check mt-2">
-                                <input type="checkbox" name="is_eligibility_flag_${questionCounter}[]" class="form-check-input" id="eligibility_flag_${questionCounter}_0">
-                                <label class="form-check-label" for="eligibility_flag_${questionCounter}_0">
-                                    Eligibility Flag
-                                </label>
-                            </div>
-                            <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
-                                ✕
-                            </button>
-                        </div>
+                    <div class="choices-section hidden">
+                        <div class="choices-container"></div>
+                        <button type="button" class="mt-2 text-blue-600 hover:text-blue-800" onclick="addChoice(this)">
+                            <i class="fas fa-plus"></i> Add Choice
+                        </button>
                     </div>
-                    <button type="button" onclick="addChoice(${questionCounter})" class="bg-indigo-400 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-full text-sm">
-                        Add Choice
-                    </button>
-                </div>
-            `;
-            container.appendChild(questionDiv);
-        }
+                `;
+                
+                questionsContainer.appendChild(newQuestion);
+            }
 
-        function toggleChoices(select) {
-            const choicesContainer = select.closest('div').nextElementSibling;
-            choicesContainer.style.display = ['multiple_choice', 'checkbox', 'radio'].includes(select.value) ? 'block' : 'none';
-        }
+            function removeQuestion(button) {
+                const questionSection = button.closest('.question-section');
+                questionSection.remove();
+            }
 
-        function addChoice(questionId) {
-            const choicesList = document.getElementById(`choicesList_${questionId}`);
-            const newChoiceDiv = document.createElement('div');
-            newChoiceDiv.className = 'flex items-center';
-            newChoiceDiv.innerHTML = `
-                <input type="text" name="choices_${questionId}[]" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm mr-2 p-3" placeholder="Enter choice">
-                <div class="form-check mt-2">
-                    <input type="checkbox" name="is_eligibility_flag_${questionId}[]" class="form-check-input" id="eligibility_flag_${questionId}_${choicesList.children.length}">
-                    <label class="form-check-label" for="eligibility_flag_${questionId}_${choicesList.children.length}">
+            function toggleChoices(select) {
+                const choicesSection = select.nextElementSibling;
+                if (['multiple_choice', 'checkbox', 'radio'].includes(select.value)) {
+                    choicesSection.classList.remove('hidden');
+                    if (choicesSection.querySelector('.choices-container').children.length === 0) {
+                        // Add two default choices
+                        const addChoiceBtn = choicesSection.querySelector('button');
+                        addChoice(addChoiceBtn);
+                        addChoice(addChoiceBtn);
+                    }
+                } else {
+                    choicesSection.classList.add('hidden');
+                }
+            }
+
+            function addChoice(button) {
+                const choicesContainer = button.previousElementSibling;
+                const pageSection = button.closest('.page-section');
+                const pageIndex = pageSection.dataset.page;
+                const questionSection = button.closest('.question-section');
+                const questionIndex = Array.from(questionSection.parentNode.children).indexOf(questionSection);
+                
+                const choiceDiv = document.createElement('div');
+                choiceDiv.className = 'choice-item flex items-center space-x-2 mb-2';
+                choiceDiv.innerHTML = `
+                    <input type="text" name="page_${pageIndex}_question_${questionIndex}_choices[]" class="flex-grow p-2 border rounded" placeholder="Enter choice" required>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="page_${pageIndex}_question_${questionIndex}_is_eligibility_flag[]" class="mr-2">
                         Eligibility Flag
                     </label>
-                </div>
-                <button type="button" onclick="removeChoice(this)" class="text-red-500 hover:text-red-700">
-                    ✕
-                </button>
-            `;
-            choicesList.appendChild(newChoiceDiv);
-        }
-
-        function removeChoice(button) {
-            const choiceDiv = button.closest('div');
-            const choicesList = choiceDiv.parentElement;
-
-            if (choicesList.children.length > 1) {
-                choiceDiv.remove();
-            }
-        }
-
-        const surveyForm = document.getElementById('surveyForm');
-        const confirmationModal = document.getElementById('confirmationModal');
-        const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
-        const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
-        const editSurveyBtn = document.getElementById('editSurveyBtn');
-
-        surveyForm.addEventListener('submit', function (e) {
-            e.preventDefault(); // Stop form from submitting immediately
-
-            // Validate form before showing modal
-            const questions = document.querySelectorAll('input[name="question_text"]');
-
-            if (questions.length === 0) {
-                alert('At least one question is required.');
-                return;
+                    <button type="button" class="text-red-600 hover:text-red-800" onclick="removeChoice(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                choicesContainer.appendChild(choiceDiv);
             }
 
-            // Validate multiple choice and checkbox questions
-            questions.forEach(questionInput => {
-                const questionType = questionInput.closest('div').nextElementSibling.querySelector('select').value;
-                if (['multiple_choice', 'checkbox', 'radio'].includes(questionType)) {
-                    const choicesContainer = questionInput.closest('.border').querySelector('div[id^="choices_container_"]');
-                    const choiceInputs = choicesContainer.querySelectorAll('input[name^="choices_"]');
-
-                    const validChoices = Array.from(choiceInputs)
-                        .map(input => input.value.trim())
-                        .filter(value => value !== '');
-
-                    if (validChoices.length < 2) {
-                        alert(`Question "${questionInput.value}" requires at least two choices.`);
-                        return;
-                    }
+            function removeChoice(button) {
+                const choiceItem = button.closest('.choice-item');
+                const choicesContainer = choiceItem.parentElement;
+                
+                // Only remove if there are more than 2 choices
+                if (choicesContainer.children.length > 2) {
+                    choiceItem.remove();
+                } else {
+                    alert('Multiple choice questions must have at least 2 choices.');
                 }
-            });
+            }
+        </script>
+    </div>
 
-            // Show confirmation modal
-            confirmationModal.classList.remove('hidden');
-            confirmationModal.classList.add('flex');
-        });
-
-        confirmSubmitBtn.addEventListener('click', function () {
-            // Actually submit the form
-            surveyForm.submit();
-        });
-
-        cancelSubmitBtn.addEventListener('click', function () {
-            // Hide modal
-            confirmationModal.classList.add('hidden');
-            confirmationModal.classList.remove('flex');
-        });
-
-        editSurveyBtn.addEventListener('click', function () {
-            // Hide modal
-            confirmationModal.classList.add('hidden');
-            confirmationModal.classList.remove('flex');
-        });
-    </script>
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">Confirm Survey Submission</h2>
+            <p class="text-gray-600 mb-6 text-center">Are you sure you want to submit this survey?</p>
+            <div class="flex justify-between">
+                <button id="editSurveyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full">
+                    Edit Survey
+                </button>
+                <button id="confirmSubmitBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full">
+                    Confirm Submission
+                </button>
+                <button id="cancelSubmitBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

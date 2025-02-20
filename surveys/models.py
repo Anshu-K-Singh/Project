@@ -51,6 +51,17 @@ class Survey(models.Model):
     def __str__(self):
         return self.title
 
+class SurveyPage(models.Model):
+    survey = models.ForeignKey(Survey, related_name='pages', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.title} - Page {self.order + 1}"
+
 class Question(models.Model):
     QUESTION_TYPES = [
         ('text', 'Text'),
@@ -60,6 +71,7 @@ class Question(models.Model):
     ]
     
     survey = models.ForeignKey(Survey, related_name='questions', on_delete=models.CASCADE)
+    page = models.ForeignKey(SurveyPage, related_name='questions', on_delete=models.CASCADE, null=True)
     text = models.TextField()
     question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
     

@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "surveys",
     "respondent_app",
     'django_htmx',
-    "debug_toolbar"
+    # "debug_toolbar"
 ]
 
 MIDDLEWARE = [
@@ -55,8 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 INTERNAL_IPS = [

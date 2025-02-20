@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Survey, Question, Choice, Response, Answer, SurveyDistribution, SurveyNotification
+from .models import Survey, Question, Choice, Response, Answer, SurveyDistribution, SurveyNotification, SurveyPage
 from .forms import SurveyForm, QuestionForm, ChoiceForm
 from django.db.models import Count, F
 import logging
@@ -40,29 +40,7 @@ class CreateSurveyView(LoginRequiredMixin, View):
     def post(self, request):
         survey_form = SurveyForm(request.POST)
         
-        # Collect question and choice data to re-populate the form
-        question_texts = request.POST.getlist('question_text')
-        question_types = request.POST.getlist('question_type')
-        
         if not survey_form.is_valid():
-            return render(request, 'surveys/create_survey.html', {
-                'survey_form': survey_form,
-                'existing_questions': [
-                    {
-                        'text': text, 
-                        'type': q_type,
-                        'choices': request.POST.getlist(f'choices_{i+1}[]') if q_type in ['multiple_choice', 'checkbox', 'radio'] else []
-                    } 
-                    for i, (text, q_type) in enumerate(zip(question_texts, question_types))
-                ]
-            })
-        
-        # Get question and choice data directly from POST
-        question_texts = request.POST.getlist('question_text')
-        question_types = request.POST.getlist('question_type')
-        
-        if not question_texts:
-            messages.error(request, "At least one question is required.")
             return render(request, 'surveys/create_survey.html', {
                 'survey_form': survey_form
             })
@@ -74,42 +52,66 @@ class CreateSurveyView(LoginRequiredMixin, View):
                 survey.user = request.user
                 survey.save()
                 
-                # Process and save questions
-                for index, (text, q_type) in enumerate(zip(question_texts, question_types)):
-                    # Create question
-                    question = Question.objects.create(
-                        text=text,
-                        question_type=q_type,
-                        survey=survey
+                # Process pages and questions
+                page_titles = request.POST.getlist('page_title[]')
+                page_orders = request.POST.getlist('page_order[]')
+                question_texts = request.POST.getlist('question_text')
+                question_types = request.POST.getlist('question_type')
+                
+                if not page_titles:
+                    messages.error(request, "At least one page is required.")
+                    return render(request, 'surveys/create_survey.html', {
+                        'survey_form': survey_form
+                    })
+                
+                # Create pages
+                for i, (title, order) in enumerate(zip(page_titles, page_orders)):
+                    page = SurveyPage.objects.create(
+                        survey=survey,
+                        title=title,
+                        order=int(order)
                     )
                     
-                    # Handle choices for multiple choice, checkbox, and radio
-                    if q_type in ['multiple_choice', 'checkbox', 'radio']:
-                        # Construct the choices key dynamically
-                        choices_key = f'choices_{index + 1}[]'
-                        eligibility_flag_key = f'is_eligibility_flag_{index + 1}[]'
+                    # Get questions for this page
+                    page_questions = request.POST.getlist(f'page_{i}_question_text')
+                    page_question_types = request.POST.getlist(f'page_{i}_question_type')
+                    
+                    if not page_questions:
+                        messages.error(request, f"At least one question is required for page: {title}")
+                        raise ValidationError(f"Page {title} requires at least one question.")
+                    
+                    # Process questions for this page
+                    for j, (text, q_type) in enumerate(zip(page_questions, page_question_types)):
+                        question = Question.objects.create(
+                            survey=survey,
+                            page=page,
+                            text=text,
+                            question_type=q_type
+                        )
                         
-                        # Get choices and eligibility flags
-                        choice_texts = request.POST.getlist(choices_key)
-                        eligibility_flags = request.POST.getlist(eligibility_flag_key)
-                        
-                        choice_texts = [choice.strip() for choice in choice_texts if choice.strip()]
-                        
-                        # Validate choices
-                        if len(choice_texts) < 2:
-                            raise ValidationError(f"Multiple Choice, Checkbox, and Radio questions require at least two choices. Please add choices for the question: '{text}'.")
-                        
-                        # Create choices
-                        for i, choice_text in enumerate(choice_texts):
-                            Choice.objects.create(
-                                question=question,
-                                text=choice_text,
-                                is_eligibility_flag=i < len(eligibility_flags) and eligibility_flags[i] == 'on'
-                            )
+                        # Handle choices for multiple choice questions
+                        if q_type in ['multiple_choice', 'checkbox', 'radio']:
+                            choices_key = f'page_{i}_question_{j}_choices[]'
+                            eligibility_flag_key = f'page_{i}_question_{j}_is_eligibility_flag[]'
+                            
+                            choice_texts = request.POST.getlist(choices_key)
+                            eligibility_flags = request.POST.getlist(eligibility_flag_key)
+                            
+                            choice_texts = [choice.strip() for choice in choice_texts if choice.strip()]
+                            
+                            if len(choice_texts) < 2:
+                                raise ValidationError(f"Multiple Choice, Checkbox, and Radio questions require at least two choices. Please add choices for the question: '{text}'")
+                            
+                            for k, choice_text in enumerate(choice_texts):
+                                Choice.objects.create(
+                                    question=question,
+                                    text=choice_text,
+                                    is_eligibility_flag=k < len(eligibility_flags) and eligibility_flags[k] == 'on'
+                                )
                 
                 messages.success(request, "Survey created successfully!")
                 return redirect('surveys:survey_detail', survey_id=survey.id)
-        
+                
         except Exception as e:
             messages.error(request, f"Error creating survey: {str(e)}")
             return render(request, 'surveys/create_survey.html', {
@@ -157,7 +159,25 @@ class TakeSurveyView(View):
                 messages.warning(request, "You have already responded to this survey.")
                 return redirect('respondent_app:dashboard')
         
-        return render(request, 'surveys/take_survey.html', {'survey': survey})
+        # Get current page from session or default to first page
+        current_page = request.session.get(f'survey_{survey.id}_current_page', 0)
+        total_pages = survey.pages.count()
+        
+        # If current_page is beyond total pages, reset to first page
+        if current_page >= total_pages:
+            current_page = 0
+            request.session[f'survey_{survey.id}_current_page'] = current_page
+        
+        # Get the current page object
+        current_page_obj = survey.pages.all()[current_page]
+        
+        return render(request, 'surveys/take_survey.html', {
+            'survey': survey,
+            'current_page': current_page,
+            'total_pages': total_pages,
+            'current_page_obj': current_page_obj,
+            'progress': int((current_page / total_pages) * 100) if total_pages > 0 else 0
+        })
 
     def post(self, request, unique_link):
         # Try to find survey by unique_link (for authenticated users)
@@ -182,85 +202,114 @@ class TakeSurveyView(View):
             if existing_response:
                 messages.warning(request, "You have already responded to this survey.")
                 return redirect('respondent_app:dashboard')
+
+        # Get current page information
+        current_page = request.session.get(f'survey_{survey.id}_current_page', 0)
+        total_pages = survey.pages.count()
+        current_page_obj = survey.pages.all()[current_page]
         
-        # Check if the survey has any eligibility flags at all
-        survey_has_eligibility_flags = any(
-            question.choices.filter(is_eligibility_flag=True).exists()
-            for question in survey.questions.all()
-        )
-        
-        # If survey has eligibility flags, perform comprehensive validation
-        if survey_has_eligibility_flags:
-            # Flag to track if survey is eligible
-            survey_is_eligible = True
+        # Check if it's a navigation request
+        if 'prev_page' in request.POST:
+            if current_page > 0:
+                current_page -= 1
+                request.session[f'survey_{survey.id}_current_page'] = current_page
+            return redirect('surveys:take_survey', unique_link=unique_link)
             
-            # Validate each question
-            for question in survey.questions.all():
-                # Get eligibility choices for this question
-                eligibility_choices = question.choices.filter(is_eligibility_flag=True)
+        # Store answers in session for the current page
+        page_answers = {}
+        for question in current_page_obj.questions.all():
+            if question.question_type == 'text':
+                answer = request.POST.get(f'question_{question.id}')
+                if answer:
+                    page_answers[str(question.id)] = {'type': 'text', 'answer': answer}
+            else:
+                answers = request.POST.getlist(f'question_{question.id}')
+                if answers:
+                    page_answers[str(question.id)] = {'type': question.question_type, 'answers': answers}
+        
+        # Store answers in session
+        survey_answers = request.session.get(f'survey_{survey.id}_answers', {})
+        survey_answers[str(current_page)] = page_answers
+        request.session[f'survey_{survey.id}_answers'] = survey_answers
+
+        # Validate current page
+        for question in current_page_obj.questions.all():
+            # Check if question has eligibility flags
+            if question.choices.filter(is_eligibility_flag=True).exists():
+                user_answers = request.POST.getlist(f'question_{question.id}')
+                if not user_answers:
+                    messages.error(request, f"Question '{question.text}' must be answered.")
+                    return render(request, 'surveys/take_survey.html', {
+                        'survey': survey,
+                        'current_page': current_page,
+                        'total_pages': total_pages,
+                        'current_page_obj': current_page_obj,
+                        'progress': int((current_page / total_pages) * 100) if total_pages > 0 else 0
+                    })
                 
-                # If this question has eligibility choices
-                if eligibility_choices.exists():
-                    # Get the user's answer for this question
-                    user_answer = request.POST.getlist(f'question_{question.id}')
-                    
-                    # If no answer is provided
-                    if not user_answer:
-                        messages.error(request, f"Question '{question.text}' must be answered.")
-                        return render(request, 'surveys/take_survey.html', {'survey': survey})
-                    
-                    # Check if any of the selected choices are eligibility choices
-                    is_question_eligible = any(
-                        Choice.objects.filter(id=choice_id, is_eligibility_flag=True).exists() 
-                        for choice_id in user_answer
-                    )
-                    
-                    # If no eligible choice is selected, mark survey as ineligible
-                    if not is_question_eligible:
-                        messages.error(request, f"You are not eligible to take this survey. Only specific option(s) for '{question.text}' are allowed.")
-                        return render(request, 'surveys/take_survey.html', {'survey': survey})
+                # Check if any selected choice is an eligibility choice
+                is_question_eligible = any(
+                    Choice.objects.filter(id=choice_id, is_eligibility_flag=True).exists()
+                    for choice_id in user_answers
+                )
+                
+                if not is_question_eligible:
+                    messages.error(request, f"You are not eligible to take this survey. Only specific option(s) for '{question.text}' are allowed.")
+                    return render(request, 'surveys/take_survey.html', {
+                        'survey': survey,
+                        'current_page': current_page,
+                        'total_pages': total_pages,
+                        'current_page_obj': current_page_obj,
+                        'progress': int((current_page / total_pages) * 100) if total_pages > 0 else 0
+                    })
+
+        # If this is not the last page, move to next page
+        if 'next_page' in request.POST and current_page < total_pages - 1:
+            current_page += 1
+            request.session[f'survey_{survey.id}_current_page'] = current_page
+            return redirect('surveys:take_survey', unique_link=unique_link)
         
-        # Validate all questions are answered (existing validation)
-        for question in survey.questions.all():
-            answer = request.POST.get(f'question_{question.id}')
-            if not answer:
-                messages.error(request, f"Question '{question.text}' must be answered.")
-                return render(request, 'surveys/take_survey.html', {'survey': survey})
-        
-        # Create a new response
-        with transaction.atomic():
-            response = Response.objects.create(
-                survey=survey,
-                user=request.user if request.user.is_authenticated else None
-            )
-            
-            # Process answers for each question
-            for question in survey.questions.all():
-                if question.question_type == 'text':
-                    text_answer = request.POST.get(f'question_{question.id}')
-                    if text_answer:
-                        Answer.objects.create(
-                            response=response,
-                            question=question,
-                            text_answer=text_answer
-                        )
-                elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
-                    choice_ids = request.POST.getlist(f'question_{question.id}')
-                    for choice_id in choice_ids:
-                        choice = Choice.objects.get(id=choice_id)
-                        Answer.objects.create(
-                            response=response,
-                            question=question,
-                            choice_answer=choice
-                        )
-            
-            # Increment external response count if it's an external response
-            if not request.user.is_authenticated:
-                survey.external_response_count = F('external_response_count') + 1
-                survey.save()
-        
-        messages.success(request, "Survey submitted successfully!")
-        return render(request, 'surveys/survey_completed.html')
+        # If this is the final submission
+        if 'submit_survey' in request.POST:
+            # Create response and store all answers
+            with transaction.atomic():
+                response = Response.objects.create(
+                    survey=survey,
+                    user=request.user if request.user.is_authenticated else None
+                )
+                
+                # Process all stored answers
+                survey_answers = request.session.get(f'survey_{survey.id}_answers', {})
+                for page_answers in survey_answers.values():
+                    for question_id, answer_data in page_answers.items():
+                        question = Question.objects.get(id=question_id)
+                        
+                        if answer_data['type'] == 'text':
+                            Answer.objects.create(
+                                response=response,
+                                question=question,
+                                text_answer=answer_data['answer']
+                            )
+                        else:
+                            for choice_id in answer_data['answers']:
+                                choice = Choice.objects.get(id=choice_id)
+                                Answer.objects.create(
+                                    response=response,
+                                    question=question,
+                                    choice_answer=choice
+                                )
+                
+                # Increment external response count if it's an external response
+                if not request.user.is_authenticated:
+                    survey.external_response_count = F('external_response_count') + 1
+                    survey.save()
+                
+                # Clear session data
+                request.session.pop(f'survey_{survey.id}_current_page', None)
+                request.session.pop(f'survey_{survey.id}_answers', None)
+                
+                messages.success(request, "Survey submitted successfully!")
+                return render(request, 'surveys/survey_completed.html')
 
 class SurveyResultsView(LoginRequiredMixin, View):
     def get(self, request, survey_id):
@@ -269,39 +318,47 @@ class SurveyResultsView(LoginRequiredMixin, View):
         
         # Prepare results data
         results = {}
-        for question in survey.questions.all():
-            question_results = {
-                'text': question.text,
-                'type': question.question_type,
-                'responses': []
+        for page in survey.pages.all():
+            page_results = {
+                'title': page.title,
+                'questions': []
             }
             
-            if question.question_type == 'text':
-                # Collect text responses
-                text_responses = []
-                for response in responses:
-                    try:
-                        answer = response.answers.get(question=question)
-                        if answer.text_answer:
-                            text_responses.append(answer.text_answer)
-                    except Answer.DoesNotExist:
-                        pass
-                question_results['responses'] = text_responses
-            
-            elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
-                # Collect choice distribution
-                choice_counts = {}
-                total_responses = responses.filter(answers__question=question).count()
+            for question in page.questions.all():
+                question_results = {
+                    'text': question.text,
+                    'type': question.question_type,
+                    'responses': []
+                }
                 
-                for choice in question.choices.all():
-                    choice_count = responses.filter(answers__question=question, answers__choice_answer=choice).count()
-                    choice_counts[choice.text] = {
-                        'count': choice_count,
-                        'percentage': (choice_count / total_responses * 100) if total_responses > 0 else 0
-                    }
-                question_results['choices'] = choice_counts
+                if question.question_type == 'text':
+                    # Collect text responses
+                    text_responses = []
+                    for response in responses:
+                        try:
+                            answer = response.answers.get(question=question)
+                            if answer.text_answer:
+                                text_responses.append(answer.text_answer)
+                        except Answer.DoesNotExist:
+                            pass
+                    question_results['responses'] = text_responses
+                
+                elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                    # Collect choice distribution
+                    choice_counts = {}
+                    total_responses = responses.filter(answers__question=question).count()
+                    
+                    for choice in question.choices.all():
+                        choice_count = responses.filter(answers__question=question, answers__choice_answer=choice).count()
+                        choice_counts[choice.text] = {
+                            'count': choice_count,
+                            'percentage': (choice_count / total_responses * 100) if total_responses > 0 else 0
+                        }
+                    question_results['choices'] = choice_counts
+                
+                page_results['questions'].append(question_results)
             
-            results[question.id] = question_results
+            results[page.id] = page_results
         
         return render(request, 'surveys/survey_results.html', {
             'survey': survey,
@@ -325,7 +382,9 @@ class ExportSurveyCSVView(LoginRequiredMixin, View):
         
         # Prepare headers: Response ID + Questions
         headers = ['Response ID']
-        headers.extend([question.text for question in survey.questions.all()])
+        for page in survey.pages.all():
+            for question in page.questions.all():
+                headers.append(question.text)
         writer.writerow(headers)
         
         # Write response data
@@ -333,20 +392,21 @@ class ExportSurveyCSVView(LoginRequiredMixin, View):
             row = [response_obj.id]
             
             # Get answers for each question
-            for question in survey.questions.all():
-                try:
-                    answer = response_obj.answers.get(question=question)
-                    
-                    # Handle different question types
-                    if question.question_type == 'text':
-                        row.append(answer.text_answer or '')
-                    elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
-                        # For choice-based questions, get choice text
-                        row.append(answer.choice_answer.text if answer.choice_answer else '')
-                    else:
+            for page in survey.pages.all():
+                for question in page.questions.all():
+                    try:
+                        answer = response_obj.answers.get(question=question)
+                        
+                        # Handle different question types
+                        if question.question_type == 'text':
+                            row.append(answer.text_answer or '')
+                        elif question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                            # For choice-based questions, get choice text
+                            row.append(answer.choice_answer.text if answer.choice_answer else '')
+                        else:
+                            row.append('')
+                    except Answer.DoesNotExist:
                         row.append('')
-                except Answer.DoesNotExist:
-                    row.append('')
             
             writer.writerow(row)
         
@@ -373,61 +433,85 @@ class EditSurveyView(LoginRequiredMixin, View):
         survey.description = request.POST.get('description')
         survey.save()
         
-        # Prepare to track existing and new questions
-        existing_question_ids = list(survey.questions.values_list('id', flat=True))
+        # Prepare to track existing and new pages
+        existing_page_ids = list(survey.pages.values_list('id', flat=True))
         
-        # Create new questions
-        question_texts = request.POST.getlist('question_text')
-        question_types = request.POST.getlist('question_type')
+        # Create new pages
+        page_titles = request.POST.getlist('page_title')
+        page_orders = request.POST.getlist('page_order')
         
-        for i, question_text in enumerate(question_texts):
-            # Check if this is an existing question or a new one
-            if i < len(existing_question_ids):
-                # Update existing question
-                question = Question.objects.get(id=existing_question_ids[i])
-                question.text = question_text
-                question.question_type = question_types[i]
-                question.save()
+        for i, (title, order) in enumerate(zip(page_titles, page_orders)):
+            # Check if this is an existing page or a new one
+            if i < len(existing_page_ids):
+                # Update existing page
+                page = SurveyPage.objects.get(id=existing_page_ids[i])
+                page.title = title
+                page.order = int(order)
+                page.save()
             else:
-                # Create new question
-                question = Question.objects.create(
+                # Create new page
+                page = SurveyPage.objects.create(
                     survey=survey,
-                    text=question_text,
-                    question_type=question_types[i]
+                    title=title,
+                    order=int(order)
                 )
             
-            # Handle choices for multiple choice, checkbox, and radio questions
-            if question_types[i] in ['multiple_choice', 'checkbox', 'radio']:
-                # Get existing choices for this question
-                existing_choices = list(question.choices.all())
+            # Prepare to track existing and new questions
+            existing_question_ids = list(page.questions.values_list('id', flat=True))
+            
+            # Create new questions
+            question_texts = request.POST.getlist(f'page_{i}_question_text')
+            question_types = request.POST.getlist(f'page_{i}_question_type')
+            
+            for j, (text, q_type) in enumerate(zip(question_texts, question_types)):
+                # Check if this is an existing question or a new one
+                if j < len(existing_question_ids):
+                    # Update existing question
+                    question = Question.objects.get(id=existing_question_ids[j])
+                    question.text = text
+                    question.question_type = q_type
+                    question.save()
+                else:
+                    # Create new question
+                    question = Question.objects.create(
+                        survey=survey,
+                        page=page,
+                        text=text,
+                        question_type=q_type
+                    )
                 
-                # Get new choices from form
-                choices_key = f'choices_{i}[]'
-                new_choice_texts = request.POST.getlist(choices_key)
-                
-                # Update or create choices
-                for j, choice_text in enumerate(new_choice_texts):
-                    if j < len(existing_choices):
-                        # Update existing choice
-                        existing_choice = existing_choices[j]
-                        existing_choice.text = choice_text
-                        existing_choice.save()
-                    else:
-                        # Create new choice
-                        Choice.objects.create(
-                            question=question,
-                            text=choice_text
-                        )
-                
-                # Remove any extra existing choices
-                if len(new_choice_texts) < len(existing_choices):
-                    for extra_choice in existing_choices[len(new_choice_texts):]:
-                        extra_choice.delete()
+                # Handle choices for multiple choice, checkbox, and radio questions
+                if q_type in ['multiple_choice', 'checkbox', 'radio']:
+                    # Get existing choices for this question
+                    existing_choices = list(question.choices.all())
+                    
+                    # Get new choices from form
+                    choices_key = f'page_{i}_question_{j}_choices[]'
+                    new_choice_texts = request.POST.getlist(choices_key)
+                    
+                    # Update or create choices
+                    for k, choice_text in enumerate(new_choice_texts):
+                        if k < len(existing_choices):
+                            # Update existing choice
+                            existing_choice = existing_choices[k]
+                            existing_choice.text = choice_text
+                            existing_choice.save()
+                        else:
+                            # Create new choice
+                            Choice.objects.create(
+                                question=question,
+                                text=choice_text
+                            )
+                    
+                    # Remove any extra existing choices
+                    if len(new_choice_texts) < len(existing_choices):
+                        for extra_choice in existing_choices[len(new_choice_texts):]:
+                            extra_choice.delete()
         
-        # Remove any extra existing questions
-        if len(question_texts) < len(existing_question_ids):
-            for extra_question_id in existing_question_ids[len(question_texts):]:
-                Question.objects.get(id=extra_question_id).delete()
+        # Remove any extra existing pages
+        if len(page_titles) < len(existing_page_ids):
+            for extra_page_id in existing_page_ids[len(page_titles):]:
+                SurveyPage.objects.get(id=extra_page_id).delete()
         
         messages.success(request, "Survey updated successfully!")
         return redirect('surveys:survey_detail', survey_id=survey.id)
@@ -514,24 +598,29 @@ class ExportSurveyPDFView(LoginRequiredMixin, View):
         story.append(Paragraph(f"<b>Total Questions:</b> {survey.questions.count()}", normal_style))
         story.append(Spacer(1, 12))
         
-        # Questions Section
-        story.append(Paragraph("Survey Questions", heading_style))
+        # Pages Section
+        story.append(Paragraph("Survey Pages", heading_style))
         story.append(Spacer(1, 6))
         
-        for index, question in enumerate(survey.questions.all(), 1):
-            # Question Header
-            story.append(Paragraph(f"Question {index}", normal_style))
-            story.append(Paragraph(f"<b>Text:</b> {question.text}", normal_style))
-            story.append(Paragraph(f"<b>Type:</b> {question.get_question_type_display()}", normal_style))
+        for page in survey.pages.all():
+            # Page Header
+            story.append(Paragraph(f"Page {page.order}: {page.title}", normal_style))
+            story.append(Spacer(1, 6))
             
-            # Choices for multiple choice questions
-            if question.question_type in ['multiple_choice', 'checkbox', 'radio']:
-                choices = question.choices.all()
-                if choices:
-                    choice_text = ", ".join([choice.text for choice in choices])
-                    story.append(Paragraph(f"<b>Choices:</b> {choice_text}", normal_style))
-            
-            story.append(Spacer(1, 12))
+            # Questions for this page
+            for question in page.questions.all():
+                # Question Header
+                story.append(Paragraph(f"Question: {question.text}", normal_style))
+                story.append(Paragraph(f"<b>Type:</b> {question.get_question_type_display()}", normal_style))
+                
+                # Choices for multiple choice questions
+                if question.question_type in ['multiple_choice', 'checkbox', 'radio']:
+                    choices = question.choices.all()
+                    if choices:
+                        choice_text = ", ".join([choice.text for choice in choices])
+                        story.append(Paragraph(f"<b>Choices:</b> {choice_text}", normal_style))
+                
+                story.append(Spacer(1, 12))
         
         # Build PDF
         doc.build(story)
@@ -623,7 +712,7 @@ class SendSurveyToGroupView(LoginRequiredMixin, View):
 
             survey.points = points
             survey.save()
-            return redirect('surveys:survey_detail', survey_id=survey_id)
+            return redirect('surveys:survey_detail', survey_id=survey.id)
 
         except RespondentGroup.DoesNotExist:
             messages.error(request, "Selected respondent group not found.")
