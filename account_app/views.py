@@ -10,18 +10,20 @@ from .forms import UserRegisterForm
 
 
 def login_view(request):
-    """Handle user login."""
+    """Handle user login with special routing for staff users."""
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            # If login is successful, authenticate and log the user in
             user = form.get_user()
             login(request, user)
 
-            # Custom redirection logic
+            # Routing logic for different user types
             if user.is_superuser:
-                # Superusers go to home page
-                return redirect('home')
+                # Superusers go to admin index
+                return redirect('admin:index')
+            elif user.is_staff:
+                # Staff users go to survey dashboard
+                return redirect('dashboard')
             else:
                 # Regular users go to respondent dashboard
                 return redirect('respondent_app:dashboard')
