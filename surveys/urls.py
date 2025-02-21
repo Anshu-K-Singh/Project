@@ -12,7 +12,8 @@ from .views import (
     ExportSurveyPDFView,
     SendSurveyToGroupView,
     UpdateExternalResponsesView,
-    UpdateSurveyExpiryView
+    UpdateSurveyExpiryView,
+    SurveyIneligibilityView
 )
 
 app_name = 'surveys'
@@ -31,4 +32,5 @@ urlpatterns = [
     path('survey/<int:survey_id>/send-to-group/', SendSurveyToGroupView.as_view(), name='send_survey_to_group'),
     path('survey/<int:survey_id>/update-external-responses/', UpdateExternalResponsesView.as_view(), name='update_external_responses'),
     path('survey/<int:survey_id>/update-expiry/', UpdateSurveyExpiryView.as_view(), name='update_survey_expiry'),
+    path('ineligible/<str:unique_link>/<str:question_text>/', SurveyIneligibilityView.as_view(), name='survey_ineligible'),
 ]

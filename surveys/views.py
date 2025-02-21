@@ -252,7 +252,9 @@ class TakeSurveyView(View):
                     Choice.objects.filter(id=choice_id, is_eligibility_flag=True).exists()
                     for choice_id in user_answers
                 )
-                
+                if not is_question_eligible:
+                    # Redirect to ineligibility page instead of showing an error message
+                    return redirect('surveys:survey_ineligible', unique_link=unique_link, question_text=question.text)
                 if not is_question_eligible:
                     messages.error(request, f"You are not eligible to take this survey. Only specific option(s) for '{question.text}' are allowed.")
                     return render(request, 'surveys/take_survey.html', {
@@ -757,3 +759,19 @@ class UpdateSurveyExpiryView(LoginRequiredMixin, View):
         except ValueError:
             messages.error(request, "Invalid datetime format")
             return redirect('surveys:survey_detail', survey_id=survey.id)
+
+
+class SurveyIneligibilityView(View):
+    def get(self, request, unique_link, question_text):
+        """
+        Display an ineligibility page when a user does not select the required eligibility flag.
+        
+        Args:
+            request: HTTP request object
+            unique_link: Survey's unique link
+            question_text: Text of the question with eligibility flags
+        """
+        return render(request, 'surveys/403.html', {
+            'unique_link': unique_link,
+            'question_text': question_text
+        })
