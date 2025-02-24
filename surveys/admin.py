@@ -1,10 +1,10 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from import_export.resources import ModelResource
+from unfold.admin import ModelAdmin  # Unfold UI for better admin experience
 from .models import Survey, SurveyPage, Question, Choice, Answer, Response, SurveyDistribution, SurveyNotification
-from unfold.admin import ModelAdmin  # Unfold's UI for Django Admin
 
-# Create Import/Export Resources
+# === Import/Export Resources ===
 class SurveyResource(ModelResource):
     class Meta:
         model = Survey
@@ -29,14 +29,25 @@ class SurveyPageResource(ModelResource):
     class Meta:
         model = SurveyPage
 
-# Inline for Choices in Questions
+# === Inline Classes ===
 class ChoiceInline(admin.TabularInline):
     model = Choice
-    extra = 1
+    extra = 2  # Default to adding two choices per question
 
-# Survey Admin
+class QuestionInline(admin.TabularInline):
+    model = Question
+    extra = 1  # Add at least one question per survey
+    show_change_link = True
+    inlines = [ChoiceInline]  # Nest choices within questions
+
+class SurveyPageInline(admin.TabularInline):
+    model = SurveyPage
+    extra = 1  # Add one page by default
+    show_change_link = True  # Allow editing pages from survey admin
+
+# === Admin Classes ===
 @admin.register(Survey)
-class SurveyAdmin(ImportExportModelAdmin, ModelAdmin):  
+class SurveyAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = SurveyResource
     list_display = ('title', 'user', 'created_at', 'is_active', 'is_expired')
     list_editable = ('is_active',)
@@ -45,13 +56,13 @@ class SurveyAdmin(ImportExportModelAdmin, ModelAdmin):
     list_filter = ('created_at', 'is_active', 'is_expired')
     search_fields = ('title', 'user__username')
     list_per_page = 15
-    date_hierarchy = 'created_at'  # Enables date-based filtering
+    date_hierarchy = 'created_at'
+    inlines = [SurveyPageInline, QuestionInline]  # Allow adding pages and questions directly
     list_badges = {
         "is_active": {"True": "success", "False": "danger"},
         "is_expired": {"True": "danger", "False": "success"},
     }
 
-# Survey Page Admin
 @admin.register(SurveyPage)
 class SurveyPageAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = SurveyPageResource
@@ -61,7 +72,6 @@ class SurveyPageAdmin(ImportExportModelAdmin, ModelAdmin):
     list_filter = ('survey',)
     ordering = ('survey', 'order')
 
-# Question Admin
 @admin.register(Question)
 class QuestionAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = QuestionResource
@@ -69,9 +79,8 @@ class QuestionAdmin(ImportExportModelAdmin, ModelAdmin):
     list_filter = ('survey', 'question_type')
     search_fields = ('text', 'survey__title')
     list_per_page = 10
-    inlines = [ChoiceInline]
+    inlines = [ChoiceInline]  # Choices can be added within questions
 
-# Choice Admin
 @admin.register(Choice)
 class ChoiceAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = ChoiceResource
@@ -80,7 +89,6 @@ class ChoiceAdmin(ImportExportModelAdmin, ModelAdmin):
     list_filter = ('question',)
     search_fields = ('text',)
 
-# Response Admin
 @admin.register(Response)
 class ResponseAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = ResponseResource
@@ -90,7 +98,6 @@ class ResponseAdmin(ImportExportModelAdmin, ModelAdmin):
     search_fields = ('survey__title', 'user__username')
     date_hierarchy = 'submitted_at'
 
-# Answer Admin
 @admin.register(Answer)
 class AnswerAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = AnswerResource
@@ -98,7 +105,6 @@ class AnswerAdmin(ImportExportModelAdmin, ModelAdmin):
     list_filter = ('question',)
     search_fields = ('question__text',)
 
-# Survey Distribution Admin
 @admin.register(SurveyDistribution)
 class SurveyDistributionAdmin(ModelAdmin):
     list_display = ('survey', 'group', 'sent_count', 'failed_count', 'created_at')
@@ -106,7 +112,6 @@ class SurveyDistributionAdmin(ModelAdmin):
     search_fields = ('survey__title', 'group__name')
     readonly_fields = ('sent_count', 'failed_count', 'created_at')
 
-# Survey Notification Admin
 @admin.register(SurveyNotification)
 class SurveyNotificationAdmin(ModelAdmin):
     list_display = ('survey', 'user', 'is_read', 'created_at')
