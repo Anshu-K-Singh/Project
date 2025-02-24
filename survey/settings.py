@@ -31,7 +31,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'unfold',
+    "unfold.contrib.filters",  # Optional: for advanced filters
+    "unfold.contrib.forms",  # Optional: for custom form elements
+    "unfold.contrib.inlines",  # Optional: for enhanced inlines
+    "unfold.contrib.import_export",  # Optional: if using 'django-import-export'
+    "unfold.contrib.guardian",  # Optional: if using 'django-guardian'
+    "unfold.contrib.simple_history",  # Optional: if using 'django-simple-history'
+    "django.contrib.admin",
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -42,6 +49,7 @@ INSTALLED_APPS = [
     "surveys",
     "respondent_app",
     'django_htmx',
+    'import_export',
     # "debug_toolbar"
 ]
 
